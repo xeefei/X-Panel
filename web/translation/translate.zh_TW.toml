@@ -665,7 +665,7 @@
 "status" = "✅ 機器人正常運作！"
 "usage" = "❗ 請輸入要搜尋的文字！"
 "getID" = "🆔 您的 ID 為：<code>{{ .ID }}</code>"
-"helpAdminCommands" = "要重新啟動 Xray Core：\r\n<code>/restart</code>\r\n\n要搜尋客戶電子郵件：\r\n<code>/usage [電子郵件]</code>\r\n\r\n要搜尋入站（有客戶統計資料）：\r\n<code>\r\n\r\n要搜尋入站（有客戶統計資料）：\r\n<code> [備註]</code>\r\n\r\nTelegram聊天ID：\r\n<code>/id</code>\r\n\r\n一鍵設定：\r\n<code>/oneclick</code>\r\n\r\n訂閱轉換：\r\n<code>/subconverter</code>\r\n\r\n重啟〔X-Panel 面板〕：\r\n<code>/restartX</code>"
+"helpAdminCommands" = "要重新啟動 Xray Core：\r\n<code>/restart</code>\r\n\n要搜尋客戶電子郵件：\r\n<code>/usage [電子郵件]</code>\r\n\r\n要搜尋入站（有客戶統計資料）：\r\n<code>\r\n\r\n要搜尋入站（有客戶統計資料）：\r\n<code> [備註]</code>\r\n\r\nTelegram聊天ID：\r\n<code>/id</code>\r\n\r\n一鍵設定：\r\n<code>/oneclick</code>\r\n\r\n訂閱轉換：\r\n<code>/subconverter</code>\r\n\r\n重啟〔X-Panel 面板〕：\r\n<code>/restartx</code>"
 "helpClientCommands" = "要搜尋統計資料，請使用以下指令：\r\n<code>/usage [電子郵件]</code>\r\n\r\nTelegram 聊天 ID：\r\n<code>/id</code>"
 "restartUsage" = "\r\n\r\n<code>/restart</code>"
 "restartSuccess" = "✅ 操作成功！"

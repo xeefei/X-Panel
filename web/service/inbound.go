@@ -270,34 +270,6 @@ func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, boo
 	tx := db.Begin()
 	defer func() {
 		if err == nil {
-			// 【修改位置】: 在事务提交前，执行我们的新逻辑
-			// =================================================================
-			// 〔中文注释〕: 新增逻辑 - 判断是否为【一键配置】创建的入站
-			// 我们通过备注（remark）是否为一个8位的随机字符串来做一个简单识别
-			// 只有来自【一键配置】的添加入站操作，才会触发 TG 通知
-			// =================================================================
-			isOneClick := false
-			if len(inbound.Remark) == 8 {
-				// 假设8位随机备注大概率是一键配置生成的
-				isOneClick = true
-			}
-
-			if isOneClick && s.tgService != nil && s.tgService.IsRunning() {
-				// 〔中文注释〕: 使用 goroutine 异步发送通知，避免阻塞正常的 API 返回
-				go func(ib *model.Inbound) {
-					// 等待5秒，确保事务已经完全提交
-					time.Sleep(5 * time.Second)
-					logger.Infof("检测到一键配置创建成功 (备注: %s)，准备发送 TG 通知...", ib.Remark)
-
-					// 【修改位置】: 将 global.TgBot 替换为 s.tgService
-					// 〔中文注释〕: 调用注入的服务实例的方法来发送消息。
-					err := s.tgService.SendOneClickConfig(ib, true, 0)
-					if err != nil {
-						logger.Warningf("发送【一键配置】TG 通知失败: %v", err)
-					}
-				}(inbound) // 将 inbound 对象的副本传入 goroutine
-			}
-
 			// 中文注释：如果没有错误，提交事务
 			tx.Commit()
 		} else {
