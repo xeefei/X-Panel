@@ -33,7 +33,7 @@
 
 ------------
 ## ✰怎么购买【授权码】使用〔X-Panel-Pro版 面板〕？✰
-#### 1、【授权码】100一个，一机一码，包括：重装，后期的升级/更新，都能使用，但是不能用于不同的机器，所以推荐稳定使用的机器用【授权码】，
+#### 1、【授权码】100/15U一个，一机一码，一直有效，永久使用，包括：重装，后期的升级/更新，都能使用，但是不能用于不同的机器，所以推荐稳定使用的机器用【授权码】，
 #### 2、对于一年期限（年付/年抛）的机器，后期可以【换绑】，为什么要有时间限制？就是为了防止，有些人拿【授权码】滥用，
 #### 3、购买方式/渠道联系机器人：[https://t.me/Buy_ShouQuan_Bot](https://t.me/Buy_ShouQuan_Bot)
 
@@ -220,10 +220,10 @@ apt update -y&&apt install -y curl&&apt install -y socat
 
 ## 安装指定版本
 
-若要安装指定的版本，请使用以下安装命令。 e.g., ver `v26.1.8`:
+若要安装指定的版本，请使用以下安装命令。 e.g., ver `v26.2.15`:
 
 ```
-VERSION=v26.1.8 && bash <(curl -Ls "https://raw.githubusercontent.com/xeefei/x-panel/$VERSION/install.sh") $VERSION
+VERSION=v26.2.15 && bash <(curl -Ls "https://raw.githubusercontent.com/xeefei/x-panel/$VERSION/install.sh") $VERSION
 ```
 ------------
 ## 若你的VPS默认有防火墙，请在安装完成之后放行指定端口
