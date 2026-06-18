@@ -88,7 +88,7 @@ jobs:
           cd x-ui/bin
           
           # Download dependencies
-          Xray_URL="https://github.com/XTLS/Xray-core/releases/download/v26.4.17/"
+          Xray_URL="https://github.com/XTLS/Xray-core/releases/download/v26.6.1/"
           if [ "${{ matrix.platform }}" == "amd64" ]; then
             wget -q ${Xray_URL}Xray-linux-64.zip
             unzip Xray-linux-64.zip
@@ -197,8 +197,8 @@ jobs:
           cd x-ui\bin
           
           # 〔中文注释〕: 下载 Windows 版本的 Xray-core 依赖
-          # 注意：这里的 Xray 版本号 (v26.4.17) 沿用 Linux 脚本中的版本
-          $Xray_URL="https://github.com/XTLS/Xray-core/releases/download/v26.4.17/"
+          # 注意：这里的 Xray 版本号 (v26.6.1) 沿用 Linux 脚本中的版本
+          $Xray_URL="https://github.com/XTLS/Xray-core/releases/download/v26.6.1/"
           if ("${{ matrix.platform }}" -eq "amd64") {
             # Invoke-WebRequest 是 PowerShell 的下载命令，等同于 wget
             Invoke-WebRequest -Uri "${Xray_URL}Xray-windows-64.zip" -OutFile "xray.zip"
