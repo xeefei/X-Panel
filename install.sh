@@ -206,6 +206,10 @@ install_free_version() {
         if [[ ${os_version} -lt 8 ]]; then
             echo -e "${red} 请使用 CentOS 8 或更高版本 ${plain}\n" && exit 1
         fi
+    elif [[ "${release}" == "anolis" ]]; then
+        if [[ ${os_version} -lt 8 ]]; then
+            echo -e "${red} 请使用 Anolis 8 或更高版本 ${plain}\n" && exit 1
+        fi
     elif [[ "${release}" == "ubuntu" ]]; then
         if [[ ${os_version} -lt 20 ]]; then
             echo -e "${red} 请使用 Ubuntu 20 或更高版本!${plain}\n" && exit 1
@@ -236,6 +240,7 @@ install_free_version() {
         echo "- Ubuntu 20.04+"
         echo "- Debian 11+"
         echo "- CentOS 8+"
+        echo "- Anolis 8+"
         echo "- Fedora 36+"
         echo "- Arch Linux"
         echo "- Manjaro"
@@ -254,7 +259,7 @@ install_free_version() {
         ubuntu | debian | armbian)
             apt-get update && apt-get install -y -q wget curl sudo tar tzdata
             ;;
-        centos | rhel | almalinux | rocky | ol)
+        centos | rhel | almalinux | rocky | ol | anolis)
             yum -y --exclude=kernel* update && yum install -y -q wget curl sudo tar tzdata
             ;;
         fedora | amzn | virtuozzo)
@@ -358,14 +363,14 @@ install_free_version() {
             echo -e "${green}---------------->>>>>>>>>>>>>>>>>>>>>安装进度100%${plain}"
             echo ""
             sleep 2
-            wget -N --no-check-certificate -O /usr/local/x-ui-linux-$(arch).tar.gz https://github.com/xeefei/x-panel/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz
+            wget -N --no-check-certificate -O /usr/local/x-ui-linux-$(arch).tar.gz ${GH_PROXY}https://github.com/xeefei/x-panel/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz
             if [[ $? -ne 0 ]]; then
                 echo -e "${red}下载 X-Panel 失败, 请检查服务器是否可以连接至 GitHub？ ${plain}"
                 exit 1
             fi
         else
             last_version=$1
-            url="https://github.com/xeefei/x-panel/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz"
+            url="${GH_PROXY}https://github.com/xeefei/x-panel/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz"
             echo ""
             echo -e "--------------------------------------------"
             echo -e "${green}---------------->>>>开始安装 X-Panel 免费基础版$1${plain}"
@@ -384,7 +389,7 @@ install_free_version() {
                 exit 1
             fi
         fi
-        wget -O /usr/bin/x-ui-temp https://raw.githubusercontent.com/xeefei/x-panel/main/x-ui.sh
+        wget -O /usr/bin/x-ui-temp ${GH_PROXY}https://raw.githubusercontent.com/xeefei/x-panel/main/x-ui.sh
 
         # Stop x-ui service and remove old resources
         if [[ -e /usr/local/x-ui/ ]]; then

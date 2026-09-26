@@ -49,6 +49,10 @@ if [[ "${release}" == "centos" ]]; then
     if [[ ${os_version} -lt 8 ]]; then
         echo -e "${red} 请使用 CentOS 8 或更高版本 ${plain}\n" && exit 1
     fi
+if [[ "${release}" == "anolis" ]]; then
+    if [[ ${os_version} -lt 8 ]]; then
+        echo -e "${red} 请使用 Anolis 8 或更高版本 ${plain}\n" && exit 1
+    fi
 elif [[ "${release}" == "ubuntu" ]]; then
     if [[ ${os_version} -lt 20 ]]; then
         echo -e "${red} 请使用 Ubuntu 20 或更高版本!${plain}\n" && exit 1
@@ -93,6 +97,7 @@ else
     echo "- Ubuntu 20.04+"
     echo "- Debian 11+"
     echo "- CentOS 8+"
+    echo "- Anolis 8+"
     echo "- Fedora 36+"
     echo "- Arch Linux"
     echo "- Parch Linux"
@@ -143,7 +148,7 @@ before_show_menu() {
 }
 
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel/main/install.sh)
+    bash <(curl -Ls ${GH_PROXY}https://raw.githubusercontent.com/xeefei/x-panel/main/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -162,7 +167,7 @@ update() {
         fi
         return 0
     fi
-    bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel/main/install.sh)
+    bash <(curl -Ls ${GH_PROXY}https://raw.githubusercontent.com/xeefei/x-panel/main/install.sh)
     if [[ $? == 0 ]]; then
         LOGI "更新完成，面板已自动重启"
         exit 0
@@ -180,7 +185,7 @@ update_menu() {
         return 0
     fi
     
-    wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/xeefei/x-panel/main/x-ui.sh
+    wget --no-check-certificate -O /usr/bin/x-ui ${GH_PROXY}https://raw.githubusercontent.com/xeefei/x-panel/main/x-ui.sh
     chmod +x /usr/local/x-ui/x-ui.sh
     chmod +x /usr/bin/x-ui
     
@@ -202,7 +207,7 @@ custom_version() {
         exit 1
     fi
 
-    download_link="https://raw.githubusercontent.com/xeefei/x-panel/master/install.sh"
+    download_link="${GH_PROXY}https://raw.githubusercontent.com/xeefei/x-panel/master/install.sh"
 
     # Use the entered panel version in the download link
     install_command="bash <(curl -Ls $download_link) v$panel_version"
@@ -236,7 +241,7 @@ uninstall() {
     echo ""
     echo -e "卸载成功\n"
     echo "如果您需要再次安装此面板，可以使用以下命令:"
-    echo -e "${green}bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel/master/install.sh)${plain}"
+    echo -e "${green}bash <(curl -Ls ${GH_PROXY}https://raw.githubusercontent.com/xeefei/x-panel/master/install.sh)${plain}"
     echo ""
     # Trap the SIGTERM signal
     trap delete_script SIGTERM
@@ -528,7 +533,7 @@ enable_bbr() {
     ubuntu | debian | armbian)
         apt-get update && apt-get install -yqq --no-install-recommends ca-certificates
         ;;
-    centos | almalinux | rocky | oracle)
+    centos | almalinux | rocky | oracle | anolis)
         yum -y update && yum -y install ca-certificates
         ;;
     fedora)
@@ -559,7 +564,7 @@ enable_bbr() {
 }
 
 update_shell() {
-    wget -O /usr/bin/x-ui -N --no-check-certificate https://github.com/xeefei/x-panel/raw/main/x-ui.sh
+    wget -O /usr/bin/x-ui -N --no-check-certificate ${GH_PROXY}https://github.com/xeefei/x-panel/raw/main/x-ui.sh
     if [[ $? != 0 ]]; then
         echo ""
         LOGE "下载脚本失败，请检查机器是否可以连接至 GitHub"
@@ -788,12 +793,12 @@ update_geo() {
     systemctl stop x-ui
     cd ${binFolder}
     rm -f geoip.dat geosite.dat geoip_IR.dat geosite_IR.dat geoip_VN.dat geosite_VN.dat
-    wget -N https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
-    wget -N https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
-    wget -O geoip_IR.dat -N https://github.com/chocolate4u/Iran-v2ray-rules/releases/latest/download/geoip.dat
-    wget -O geosite_IR.dat -N https://github.com/chocolate4u/Iran-v2ray-rules/releases/latest/download/geosite.dat
-    wget -O geoip_VN.dat https://github.com/vuong2023/vn-v2ray-rules/releases/latest/download/geoip.dat
-    wget -O geosite_VN.dat https://github.com/vuong2023/vn-v2ray-rules/releases/latest/download/geosite.dat
+    wget -N ${GH_PROXY}https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
+    wget -N ${GH_PROXY}https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
+    wget -O geoip_IR.dat -N ${GH_PROXY}https://github.com/chocolate4u/Iran-v2ray-rules/releases/latest/download/geoip.dat
+    wget -O geosite_IR.dat -N ${GH_PROXY}https://github.com/chocolate4u/Iran-v2ray-rules/releases/latest/download/geosite.dat
+    wget -O geoip_VN.dat ${GH_PROXY}https://github.com/vuong2023/vn-v2ray-rules/releases/latest/download/geoip.dat
+    wget -O geosite_VN.dat ${GH_PROXY}https://github.com/vuong2023/vn-v2ray-rules/releases/latest/download/geosite.dat
     systemctl start x-ui
     echo -e "${green}Geosite.dat + Geoip.dat + geoip_IR.dat + geosite_IR.dat 在 bin 文件夹: '${binfolder}' 中已经更新成功 !${plain}"
     before_show_menu
@@ -1227,7 +1232,7 @@ ssl_cert_issue() {
         # 添加了 dnsutils 用于 dig 命令
         apt update && apt install socat dnsutils -y
         ;;
-    centos | rhel | almalinux | rocky | ol)
+    centos | rhel | almalinux | rocky | ol | anolis)
         # 添加了 bind-utils 用于 dig 命令
         yum -y update && yum -y install socat bind-utils
         ;;
@@ -1560,7 +1565,7 @@ warp_cloudflare() {
         show_menu
         ;;
     1)
-        bash <(curl -sSL https://raw.githubusercontent.com/hamid-gh98/x-ui-scripts/main/install_warp_proxy.sh)
+        bash <(curl -sSL ${GH_PROXY}https://raw.githubusercontent.com/hamid-gh98/x-ui-scripts/main/install_warp_proxy.sh)
         ;;
     2)
         warp a
@@ -1609,7 +1614,7 @@ fi
 
 # --------- 安装/部署sublink服务 ----------
 
-bash <(curl -Ls https://raw.githubusercontent.com/xeefei/sublink/main/install.sh)
+bash <(curl -Ls ${GH_PROXY}https://raw.githubusercontent.com/xeefei/sublink/main/install.sh)
 
 
 # --------- 安装 Nginx ----------
@@ -1809,7 +1814,7 @@ install_iplimit() {
         armbian)
             apt-get update && apt-get install fail2ban -y
             ;;
-        centos | almalinux | rocky | oracle)
+        centos | almalinux | rocky | oracle | anolis)
             yum update -y && yum install epel-release -y
             yum -y install fail2ban
             ;;
@@ -1890,7 +1895,7 @@ remove_iplimit() {
             apt-get purge -y fail2ban -y
             apt-get autoremove -y
             ;;
-        centos | almalinux | rocky | oracle)
+        centos | almalinux | rocky | oracle | anolis)
             yum remove fail2ban -y
             yum autoremove -y
             ;;
