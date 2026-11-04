@@ -44,7 +44,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.27'
+          go-version-file: go.mod
           check-latest: true
 
       - name: Build X-Panel for Linux
@@ -88,7 +88,7 @@ jobs:
           cd x-ui/bin
           
           # Download dependencies
-          Xray_URL="https://github.com/XTLS/Xray-core/releases/download/v26.10.31/"
+          Xray_URL="https://github.com/XTLS/Xray-core/releases/download/v26.9.9/"
           if [ "${{ matrix.platform }}" == "amd64" ]; then
             wget -q ${Xray_URL}Xray-linux-64.zip
             unzip Xray-linux-64.zip
@@ -170,7 +170,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.27'
+          go-version-file: go.mod
           check-latest: true
 
       - name: Build X-Panel for Windows
@@ -197,8 +197,8 @@ jobs:
           cd x-ui\bin
           
           # 〔中文注释〕: 下载 Windows 版本的 Xray-core 依赖
-          # 注意：这里的 Xray 版本号 (v26.10.31) 沿用 Linux 脚本中的版本
-          $Xray_URL="https://github.com/XTLS/Xray-core/releases/download/v26.10.31/"
+          # 注意：这里的 Xray 版本号 (v26.9.9) 沿用 Linux 脚本中的版本
+          $Xray_URL="https://github.com/XTLS/Xray-core/releases/download/v26.9.9/"
           if ("${{ matrix.platform }}" -eq "amd64") {
             # Invoke-WebRequest 是 PowerShell 的下载命令，等同于 wget
             Invoke-WebRequest -Uri "${Xray_URL}Xray-windows-64.zip" -OutFile "xray.zip"
