@@ -44,7 +44,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          go-version: '1.27'
           check-latest: true
 
       - name: Build X-Panel for Linux
@@ -170,7 +170,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          go-version: '1.27'
           check-latest: true
 
       - name: Build X-Panel for Windows
