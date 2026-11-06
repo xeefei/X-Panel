@@ -22,16 +22,35 @@ get_hwid() {
 
     # 1. 优先尝试获取 DMI Product UUID (VPS 硬件 ID，重装系统通常不变)
     if [[ -r /sys/class/dmi/id/product_uuid ]]; then
-        machine_id=$(cat /sys/class/dmi/id/product_uuid)
-    
-    # 2. 其次尝试获取 eth0 网卡 MAC 地址 (大部分 VPS 重装后 MAC 不变)
-    elif [[ -r /sys/class/net/eth0/address ]]; then
-        machine_id=$(cat /sys/class/net/eth0/address)
+        local tmp_uuid=$(cat /sys/class/dmi/id/product_uuid)
+        # [中文注释] 确保 UUID 不为空且不是全0
+        if [[ -n "$tmp_uuid" && "$tmp_uuid" != "00000000-0000-0000-0000-000000000000" ]]; then
+             machine_id="$tmp_uuid"
+        fi
+    fi
+
+    # 2. 如果 UUID 失败，使用网卡 MAC (加入强制排序逻辑，防止重装变动)
+    if [[ -z "$machine_id" ]]; then
+        # [中文注释] 获取所有网卡名称 -> 排除 loopback(lo) -> 【字母排序】 -> 取第一个
+        # sort 命令保证了选取的网卡是固定的 (例如：eth0 永远在 ens3 前面)，从而保证 MAC 的固定性。
+        # [优化] 优先匹配物理网卡前缀并排除虚拟网卡/容器网卡，防止因安装docker或vpn导致网卡排序变动而引起HWID漂移
+        local main_interface=$(ls /sys/class/net/ | grep -v "^lo$" | grep -E '^(eth|ens|enp|eno)' | sort | head -n 1)
+        if [[ -z "$main_interface" ]]; then
+            main_interface=$(ls /sys/class/net/ | grep -v "^lo$" | grep -vE '^(docker|br-|veth|tun|tap|wg|v2ray)' | sort | head -n 1)
+        fi
         
+        if [[ -n "$main_interface" && -r "/sys/class/net/$main_interface/address" ]]; then
+            machine_id=$(cat "/sys/class/net/$main_interface/address")
+        fi
+    fi
+    
     # 3. 如果都失败，才使用 machine-id (重装会变，作为最后兜底)
-    elif [[ -f /etc/machine-id ]]; then
+    if [[ -z "$machine_id" && -f /etc/machine-id ]]; then
         machine_id=$(cat /etc/machine-id)
-    else
+    fi
+    
+    # 4. 实在没有，用主机名
+    if [[ -z "$machine_id" ]]; then
         machine_id=$(hostname)
     fi
     
@@ -166,7 +185,7 @@ install_free_version() {
     # echo ""
     echo -e "${yellow}---------->>>>>当前系统的架构为: $(arch)${plain}"
     echo ""
-    last_version=$(curl -Ls "https://api.github.com/repos/xeefei/x-panel/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    last_version=$(curl -Ls "https://api.github.com/repos/xeefei/x-panel-pro/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
     # 获取 x-ui 版本
     xui_version=$(/usr/local/x-ui/x-ui -v)
 
@@ -341,7 +360,7 @@ install_free_version() {
 
         # Download resources
         if [ $# == 0 ]; then
-            last_version=$(curl -Ls "https://api.github.com/repos/xeefei/x-panel/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+            last_version=$(curl -Ls "https://api.github.com/repos/xeefei/x-panel-pro/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
             if [[ ! -n "$last_version" ]]; then
                 echo -e "${red}获取 X-Panel 版本失败，可能是 Github API 限制，请稍后再试${plain}"
                 exit 1
@@ -358,14 +377,14 @@ install_free_version() {
             echo -e "${green}---------------->>>>>>>>>>>>>>>>>>>>>安装进度100%${plain}"
             echo ""
             sleep 2
-            wget -N --no-check-certificate -O /usr/local/x-ui-linux-$(arch).tar.gz https://github.com/xeefei/x-panel/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz
+            wget -N --no-check-certificate -O /usr/local/x-ui-linux-$(arch).tar.gz https://github.com/xeefei/x-panel-pro/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz
             if [[ $? -ne 0 ]]; then
                 echo -e "${red}下载 X-Panel 失败, 请检查服务器是否可以连接至 GitHub？ ${plain}"
                 exit 1
             fi
         else
             last_version=$1
-            url="https://github.com/xeefei/x-panel/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz"
+            url="https://github.com/xeefei/x-panel-pro/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz"
             echo ""
             echo -e "--------------------------------------------"
             echo -e "${green}---------------->>>>开始安装 X-Panel 免费基础版$1${plain}"
@@ -384,7 +403,7 @@ install_free_version() {
                 exit 1
             fi
         fi
-        wget -O /usr/bin/x-ui-temp https://raw.githubusercontent.com/xeefei/x-panel/main/x-ui.sh
+        wget -O /usr/bin/x-ui-temp https://raw.githubusercontent.com/xeefei/x-panel-pro/main/x-ui.sh
 
         # Stop x-ui service and remove old resources
         if [[ -e /usr/local/x-ui/ ]]; then
@@ -488,7 +507,7 @@ install_free_version() {
         ipv4=$(curl -s4m8 ip.p3terx.com -k | sed -n 1p)
         ipv6=$(curl -s6m8 ip.p3terx.com -k | sed -n 1p)
         systemctl start warp-go >/dev/null 2>&1
-        wg-quick up wgcf >/dev/null 2A>&1
+        wg-quick up wgcf >/dev/null 2>&1
 
         echo ""
         echo -e "------->>>>${green}X-Panel 免费基础版 ${last_version}${plain}<<<<安装成功，正在启动..."
