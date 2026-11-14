@@ -841,6 +841,7 @@ ssl_cert_issue_standalone_embedded() {
     read -rp "请输入电子邮件地址 (用于注册账户): " EMAIL
     if [ -z "$EMAIL" ]; then
         LOGE "邮箱不能为空"
+        echo ""
         return 1
     fi
 
@@ -943,15 +944,22 @@ ssl_cert_issue_standalone_embedded() {
 
     # --- 6. 申请证书 (Standalone 模式) ---
     LOGI "正在使用 Standalone 模式申请证书 (占用 80 端口)..."
-    # 如果 80 端口被 nginx 或 x-ui 占用，先尝试停止它们
-    systemctl stop nginx >/dev/null 2>&1
+    
+    # 签发前：智能检测 Nginx，若存在且运行中则临时停止以释放 80 端口
+    if command -v nginx &>/dev/null && systemctl is-active --quiet nginx; then
+        LOGI "检测到 Nginx 正在运行，为避免 80 端口冲突，正在临时停止 Nginx..."
+        systemctl stop nginx
+    fi
     systemctl stop x-ui >/dev/null 2>&1
     
     if ! ~/.acme.sh/acme.sh --issue --standalone -d $DOMAIN --server $CA_SERVER --force; then
         LOGE "❌ 证书申请失败！"
         LOGE "请检查：1、域名解析是否正确指向本机 IP。2、80 端口是否开放且未被占用。"
-        # 失败尝试重启 x-ui
+        # 失败尝试重启 x-ui，若 Nginx 存在则恢复启动
         systemctl start x-ui >/dev/null 2>&1
+        if command -v nginx &>/dev/null; then
+            systemctl start nginx >/dev/null 2>&1
+        fi
         return 1
     fi
 
@@ -964,12 +972,16 @@ ssl_cert_issue_standalone_embedded() {
     
     LOGI "申请成功！正在安装证书到: $certPath"
     
-    # x-ui 是系统服务，用 systemctl restart x-ui 更稳妥
+    # x-ui 是系统服务，使用自适应动态钩子（Smart Hook）更稳妥
+    local smartPreHook='if command -v nginx &>/dev/null && systemctl is-active --quiet nginx; then systemctl stop nginx >/dev/null 2>&1; touch /tmp/xpanel_nginx_stopped_by_acme; fi'
+    local smartPostHook='if [ -f /tmp/xpanel_nginx_stopped_by_acme ]; then systemctl start nginx >/dev/null 2>&1; rm -f /tmp/xpanel_nginx_stopped_by_acme; fi'
     local reloadCmd="systemctl restart x-ui" 
     
     ~/.acme.sh/acme.sh --installcert -d $DOMAIN \
         --key-file       "${certPath}/privkey.pem" \
         --fullchain-file "${certPath}/fullchain.pem" \
+        --pre-hook       "${smartPreHook}" \
+        --post-hook      "${smartPostHook}" \
         --reloadcmd      "${reloadCmd}"
         
     if [ $? -eq 0 ]; then
@@ -1009,13 +1021,19 @@ ssl_cert_issue_standalone_embedded() {
         else
             LOGE "❌ 严重错误：证书安装显示成功，但未找到证书文件或文件为空！"
             LOGE "请检查目录权限或磁盘空间：$certPath"
-            # 恢复 x-ui 运行，避免断联
+            # 恢复 x-ui 运行，避免断联，若 Nginx 存在则恢复启动
             systemctl start x-ui >/dev/null 2>&1
+            if command -v nginx &>/dev/null; then
+                systemctl start nginx >/dev/null 2>&1
+            fi
             return 1
         fi
     else
         LOGE "证书安装步骤失败，请检查日志。"
         systemctl start x-ui >/dev/null 2>&1
+        if command -v nginx &>/dev/null; then
+            systemctl start nginx >/dev/null 2>&1
+        fi
     fi
 }
 
@@ -1221,23 +1239,29 @@ ssl_cert_issue() {
         fi
     fi
 
-    # 安装 socat 和 dnsutils/bind-utils (用于 dig)
+    # 安装 socat 和 dnsutils/bind-utils (用于 dig)，并同时补全 cron 定时服务保证自动续签
     case "${release}" in
     ubuntu | debian | armbian)
-        # 添加了 dnsutils 用于 dig 命令
-        apt update && apt install socat dnsutils -y
+        # 添加了 dnsutils 用于 dig 命令，并加入了 cron
+        apt update && apt install socat dnsutils cron -y
+        systemctl enable cron >/dev/null 2>&1
+        systemctl start cron >/dev/null 2>&1
         ;;
     centos | rhel | almalinux | rocky | ol)
-        # 添加了 bind-utils 用于 dig 命令
-        yum -y update && yum -y install socat bind-utils
+        # 添加了 bind-utils 用于 dig 命令，并加入了 cronie
+        yum -y update && yum -y install socat bind-utils cronie
+        systemctl start crond && systemctl enable crond
         ;;
     fedora | amzn | virtuozzo)
-        # 添加了 bind-utils 用于 dig 命令
-        dnf -y update && dnf -y install socat bind-utils
+        # 添加了 bind-utils 用于 dig 命令，并加入了 cronie
+        dnf -y update && dnf -y install socat bind-utils cronie
+        systemctl start crond && systemctl enable crond
         ;;
     arch | manjaro | parch)
         # 添加了 dnsutils 用于 dig 命令
-        pacman -Sy --noconfirm socat dnsutils
+        pacman -Sy --noconfirm socat dnsutils cron
+        systemctl enable cron >/dev/null 2>&1
+        systemctl start cron >/dev/null 2>&1
         ;;
     *)
         echo ""
@@ -1333,6 +1357,12 @@ ssl_cert_issue() {
     fi
     LOGI "将使用端口: ${WebPort} 来签发证书。请确保此端口已开放。"
 
+    # 签发前：智能检测 Nginx，若存在且运行中则临时停止以释放 80 端口
+    if command -v nginx &>/dev/null && systemctl is-active --quiet nginx; then
+        LOGI "检测到 Nginx 正在运行，为避免 80 端口冲突，正在临时停止 Nginx..."
+        systemctl stop nginx
+    fi
+
     # 签发证书
     echo ""
     ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
@@ -1340,27 +1370,38 @@ ssl_cert_issue() {
     if [ $? -ne 0 ]; then
         LOGE "签发证书失败，请检查日志。"
         rm -rf ~/.acme.sh/${domain}
+        # 失败时若 Nginx 存在则恢复启动
+        if command -v nginx &>/dev/null; then
+            systemctl start nginx >/dev/null 2>&1
+        fi
         exit 1
     else
         LOGE "签发证书成功，正在安装证书..."
     fi
 
-    # --- 自动设置 reloadCmd ---
+    # ---  自动设置自适应动态钩子（Smart Hook） ---
     echo ""
+    local smartPreHook='if command -v nginx &>/dev/null && systemctl is-active --quiet nginx; then systemctl stop nginx >/dev/null 2>&1; touch /tmp/xpanel_nginx_stopped_by_acme; fi'
+    local smartPostHook='if [ -f /tmp/xpanel_nginx_stopped_by_acme ]; then systemctl start nginx >/dev/null 2>&1; rm -f /tmp/xpanel_nginx_stopped_by_acme; fi'
     reloadCmd="systemctl restart x-ui"
-    LOGI "ACME 的 --reloadcmd 已自动设置为: ${yellow}systemctl restart x-ui"
+    LOGI "ACME 的【自适应智能钩子】已自动配置（支持后期动态安装或卸载 Nginx）"
     
     # 安装证书
     echo ""
     ~/.acme.sh/acme.sh --installcert -d ${domain} \
         --key-file /root/cert/${domain}/privkey.pem \
         --fullchain-file /root/cert/${domain}/fullchain.pem \
+        --pre-hook "${smartPreHook}" \
+        --post-hook "${smartPostHook}" \
         --reloadcmd "${reloadCmd}"
 
     echo ""
     if [ $? -ne 0 ]; then
         LOGE "安装证书失败，正在退出。"
         rm -rf ~/.acme.sh/${domain}
+        if command -v nginx &>/dev/null; then
+            systemctl start nginx >/dev/null 2>&1
+        fi
         exit 1
     else
         LOGI "安装证书成功，正在启用自动续订..."
@@ -1390,7 +1431,6 @@ ssl_cert_issue() {
         LOGI "已为域名自动设置面板证书路径: $domain"
         echo ""
         LOGI "  - 证书文件: $webCertFile"
-        echo ""
         LOGI "  - 私钥文件: $webKeyFile"
         echo ""
         echo -e "${green}登录访问面板URL: https://${domain}:${existing_port}${green}${existing_webBasePath}${plain}"
@@ -1487,10 +1527,12 @@ ssl_cert_issue_CF() {
             exit 1
         fi
 
-        # --- 自动设置 reloadCmd ---
+        # --- 自动设置自适应动态钩子（Smart Hook） ---
         echo ""
+        local smartPreHook='if command -v nginx &>/dev/null && systemctl is-active --quiet nginx; then systemctl stop nginx >/dev/null 2>&1; touch /tmp/xpanel_nginx_stopped_by_acme; fi'
+        local smartPostHook='if [ -f /tmp/xpanel_nginx_stopped_by_acme ]; then systemctl start nginx >/dev/null 2>&1; rm -f /tmp/xpanel_nginx_stopped_by_acme; fi'
         reloadCmd="systemctl restart x-ui"
-        LOGI "ACME 的 --reloadcmd 已自动设置为: ${yellow}systemctl restart x-ui"
+        LOGI "ACME 的【自适应智能钩子】已自动配置（支持后期动态安装或卸载 Nginx）"
         echo ""
 
         # 执行“安装证书”流程
@@ -1498,6 +1540,8 @@ ssl_cert_issue_CF() {
         ~/.acme.sh/acme.sh --installcert -d ${CF_Domain} -d *.${CF_Domain} \
             --key-file ${certPath}/privkey.pem \
             --fullchain-file ${certPath}/fullchain.pem \
+            --pre-hook "${smartPreHook}" \
+            --post-hook "${smartPostHook}" \
             --reloadcmd "${reloadCmd}"
         
         echo ""
@@ -1531,7 +1575,6 @@ ssl_cert_issue_CF() {
             LOGI "已为域名自动设置面板证书路径: $CF_Domain"
             echo ""
             LOGI "  - 证书文件: $webCertFile"
-            echo ""
             LOGI "  - 私钥文件: $webKeyFile"
             echo ""
             echo -e "${green}登录访问面板URL: https://${CF_Domain}:${existing_port}${green}${existing_webBasePath}${plain}"
