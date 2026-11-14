@@ -986,6 +986,10 @@ ssl_cert_issue_standalone_embedded() {
         
     if [ $? -eq 0 ]; then
         LOGI "✅ 证书安装命令执行成功！"
+
+# --- 关键修复：强制在系统中注册并写入 crontab 自动续签定时任务 ---
+        ~/.acme.sh/acme.sh --install-cronjob >/dev/null 2>&1
+
         # 启用 acme.sh 自动升级
         ~/.acme.sh/acme.sh --upgrade --auto-upgrade
         
@@ -1407,6 +1411,9 @@ ssl_cert_issue() {
         LOGI "安装证书成功，正在启用自动续订..."
     fi
 
+# --- 关键修复：强制在系统中注册并写入 crontab 自动续签定时任务 ---
+    ~/.acme.sh/acme.sh --install-cronjob >/dev/null 2>&1
+
     # 启用自动续订
     echo ""
     ~/.acme.sh/acme.sh --upgrade --auto-upgrade
@@ -1552,6 +1559,9 @@ ssl_cert_issue_CF() {
         else
             LOGI "证书安装成功，正在开启自动更新..."
         fi
+
+# --- 关键修复：强制在系统中注册并写入 crontab 自动续签定时任务 ---
+    ~/.acme.sh/acme.sh --install-cronjob >/dev/null 2>&1
 
         # 启用自动续订
         echo ""
