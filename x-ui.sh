@@ -39,9 +39,9 @@ echo -e "当前服务器的操作系统为:${red} $release${plain}"
 echo ""
 xui_version=$(/usr/local/x-ui/x-ui -v)
 last_version=$(curl -Ls "https://api.github.com/repos/xeefei/x-panel/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-echo -e "${green}当前代理面板的版本为: ${red}〔X-Panel 付费Pro版〕v${xui_version}${plain}"
+echo -e "${green}当前代理面板的版本为: ${red}〔X-Panel面板〕v${xui_version}${plain}"
 echo ""
-echo -e "${yellow}〔X-Panel 付费Pro版〕最新版为---------->>> ${last_version}${plain}"
+echo -e "${yellow}〔X-Panel面板〕最新版为---------->>> ${last_version}${plain}"
 
 os_version=$(grep -i version_id /etc/os-release | cut -d \" -f2 | cut -d . -f1)
 
@@ -143,8 +143,7 @@ before_show_menu() {
 }
 
 install() {
-    # 【新代码】指向你服务器上公开的 install.sh 启动器
-    bash <(curl -Ls https://auth.x-panel.vip/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel/main/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -163,8 +162,7 @@ update() {
         fi
         return 0
     fi
-    # 【新代码】指向你服务器上公开的 install.sh 启动器
-    bash <(curl -Ls https://auth.x-panel.vip/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel/main/install.sh)
     if [[ $? == 0 ]]; then
         LOGI "更新完成，面板已自动重启"
         exit 0
@@ -182,7 +180,7 @@ update_menu() {
         return 0
     fi
     
-    wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/xeefei/x-panel-pro/main/x-ui.sh
+    wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/xeefei/x-panel/main/x-ui.sh
     chmod +x /usr/local/x-ui/x-ui.sh
     chmod +x /usr/bin/x-ui
     
@@ -196,7 +194,7 @@ update_menu() {
 }
 
 custom_version() {
-    echo "输入面板版本 (例: v25.11.11):"
+    echo "输入面板版本 (例: 2.3.8):"
     read panel_version
 
     if [ -z "$panel_version" ]; then
@@ -204,12 +202,12 @@ custom_version() {
         exit 1
     fi
 
-    download_link="https://raw.githubusercontent.com/xeefei/x-panel-pro/master/install.sh"
+    download_link="https://raw.githubusercontent.com/xeefei/x-panel/master/install.sh"
 
     # Use the entered panel version in the download link
     install_command="bash <(curl -Ls $download_link) v$panel_version"
 
-    echo "下载并安装〔X-Panel 付费Pro版〕 $panel_version..."
+    echo "下载并安装面板版本 $panel_version..."
     eval $install_command
 }
 
@@ -238,7 +236,6 @@ uninstall() {
     echo ""
     echo -e "卸载成功\n"
     echo "如果您需要再次安装此面板，可以使用以下命令:"
-    echo ""
     echo -e "${green}bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel/master/install.sh)${plain}"
     echo ""
     # Trap the SIGTERM signal
@@ -261,11 +258,9 @@ reset_user() {
     /usr/local/x-ui/x-ui setting -username ${config_account} -password ${config_password} >/dev/null 2>&1
     /usr/local/x-ui/x-ui setting -remove_secret >/dev/null 2>&1
     echo -e "面板登录用户名已重置为：${green} ${config_account} ${plain}"
-    echo ""
     echo -e "面板登录密码已重置为：${green} ${config_password} ${plain}"
-    echo ""
-    echo -e "${green} 请使用新的登录用户名和密码访问 X-Panel-Pro 面板。也请记住它们！${plain}"
-    echo ""
+    echo -e "${yellow} 面板 Secret Token 已禁用 ${plain}"
+    echo -e "${green} 请使用新的登录用户名和密码访问 X-Panel 面板。也请记住它们！${plain}"
     confirm_restart
 }
 
@@ -277,7 +272,6 @@ gen_random_string() {
 
 reset_webbasepath() {
     echo -e "${yellow}修改访问路径${plain}"
-    echo ""
     
     # Prompt user to set a new web base path
     read -rp "请设置新的访问路径（若回车默认或输入y则为随机路径）: " config_webBasePath
@@ -292,7 +286,6 @@ reset_webbasepath() {
     
     # Display confirmation message
     echo -e "面板访问路径已重置为: ${green}${config_webBasePath}${plain}"
-    echo ""
     echo -e "${green}请使用新的路径登录访问面板${plain}"
 }
 
@@ -305,7 +298,6 @@ reset_config() {
         return 0
     fi
     /usr/local/x-ui/x-ui setting -reset
-    echo ""
     echo -e "所有面板设置已重置为默认，请立即重新启动面板，并使用默认的${green}13688${plain}端口访问网页面板"
     confirm_restart
 }
@@ -384,7 +376,6 @@ set_port() {
         before_show_menu
     else
         /usr/local/x-ui/x-ui setting -port ${port}
-        echo ""
         echo -e "端口已设置，请立即重启面板，并使用新端口 ${green}${port}${plain} 以访问面板"
         confirm_restart
     fi
@@ -568,7 +559,7 @@ enable_bbr() {
 }
 
 update_shell() {
-    wget -O /usr/bin/x-ui -N --no-check-certificate https://github.com/xeefei/x-panel-pro/raw/main/x-ui.sh
+    wget -O /usr/bin/x-ui -N --no-check-certificate https://github.com/xeefei/x-panel/raw/main/x-ui.sh
     if [[ $? != 0 ]]; then
         echo ""
         LOGE "下载脚本失败，请检查机器是否可以连接至 GitHub"
@@ -676,9 +667,9 @@ show_xray_status() {
 
 firewall_menu() {
     echo -e "${green}\t1.${plain} 安装防火墙并开放端口"
-    echo -e "${green}\t2.${plain} 允许的端口列表"
+    echo -e "${green}\t2.${plain} 允许列表"
     echo -e "${green}\t3.${plain} 从列表中删除端口"
-    echo -e "${green}\t4.${plain} 禁用 ufw 防火墙"
+    echo -e "${green}\t4.${plain} 禁用防火墙"
     echo -e "${green}\t0.${plain} 返回主菜单"
     read -p "请输入选项: " choice
     case "$choice" in
@@ -703,20 +694,16 @@ firewall_menu() {
 
 open_ports() {
     if ! command -v ufw &>/dev/null; then
-        echo -e "${green}ufw 防火墙未安装，正在安装......${plain}"
+        echo "ufw 防火墙未安装，正在安装..."
         apt-get update
         apt-get install -y ufw
-        echo ""
     else
-        echo ""
-        echo -e "${green}ufw 防火墙已安装${plain}"
-        echo ""
+        echo "ufw 防火墙已安装"
     fi
 
     # Check if the firewall is inactive
     if ufw status | grep -q "Status: active"; then
-        echo -e "${yellow}ufw 防火墙已激活${plain}"
-        echo ""
+        echo "防火墙已经激活"
     else
         # Open the necessary ports
         ufw allow ssh
@@ -831,7 +818,7 @@ install_acme() {
     fi 
  
     return 0 
-} 
+}
 
 # 【中文注释】：“备用方式申请证书”函数
 ssl_cert_issue_standalone_embedded() {
@@ -999,10 +986,6 @@ ssl_cert_issue_standalone_embedded() {
         
     if [ $? -eq 0 ]; then
         LOGI "✅ 证书安装命令执行成功！"
-
-# --- 关键修复：强制在系统中注册并写入 crontab 自动续签定时任务 ---
-        ~/.acme.sh/acme.sh --install-cronjob >/dev/null 2>&1
-
         # 启用 acme.sh 自动升级
         ~/.acme.sh/acme.sh --upgrade --auto-upgrade
         
@@ -1424,9 +1407,6 @@ ssl_cert_issue() {
         LOGI "安装证书成功，正在启用自动续订..."
     fi
 
-# --- 关键修复：强制在系统中注册并写入 crontab 自动续签定时任务 ---
-    ~/.acme.sh/acme.sh --install-cronjob >/dev/null 2>&1
-
     # 启用自动续订
     echo ""
     ~/.acme.sh/acme.sh --upgrade --auto-upgrade
@@ -1573,9 +1553,6 @@ ssl_cert_issue_CF() {
             LOGI "证书安装成功，正在开启自动更新..."
         fi
 
-# --- 关键修复：强制在系统中注册并写入 crontab 自动续签定时任务 ---
-    ~/.acme.sh/acme.sh --install-cronjob >/dev/null 2>&1
-
         # 启用自动续订
         echo ""
         ~/.acme.sh/acme.sh --upgrade --auto-upgrade
@@ -1653,7 +1630,7 @@ echo -e "2. 自动调用面板的证书"
 echo -e "3. 自动部署 Sublink 服务"
 echo -e "4. 自动配置 Nginx 反向代理"
 echo -e "5. 可直观在前端页面配置订阅"
-echo -e "作者：〔X-Panel 付费Pro版〕专属定制"
+echo -e "作者：〔X-Panel 面板〕专属定制"
 echo -e "===============================================${plain}"
 echo ""
     local existing_cert=$(/usr/local/x-ui/x-ui setting -getCert true | grep -Eo 'cert: .+' | awk '{print $2}')
@@ -1696,6 +1673,7 @@ acme_path="/root/.acme.sh/${domain}_ecc"
 
 cp "${acme_path}/fullchain.cer" "/etc/nginx/ssl/${domain}.cer"
 cp "${acme_path}/${domain}.key" "/etc/nginx/ssl/${domain}.key"
+
 
 # --------- 配置 Nginx 反向代理 ----------
 NGINX_CONF="/etc/nginx/conf.d/sublink.conf"
@@ -2094,1555 +2072,6 @@ iplimit_remove_conflicts() {
     done
 }
 
-# 【中文注释】：这是新添加的“网页版SSH工具”安装函数
-# 1. 自动从 GitHub API 获取最新版本
-# 2. 完整移植了 .go 文件中的 UFW、Nginx 和 systemd 逻辑
-install_sshwifty() {
-    echo "=== 开始安装 Sshwifty (网页版SSH) ==="
-    
-    # 0.a 提取 Go 里的域名获取逻辑
-    # 【中文注释】：首先检查面板是否已配置 SSL 证书，以便获取域名
-    local existing_cert=$(/usr/local/x-ui/x-ui setting -getCert true | grep -Eo 'cert: .+' | awk '{print $2}')
-    local existing_key=$(/usr/local/x-ui/x-ui setting -getCert true | grep -Eo 'key: .+' | awk '{print $2}')
-    local domain=""
-    local ACME_PATH=""
-
-    if [[ -n "$existing_cert" && -n "$existing_key" ]]; then
-        domain=$(basename "$(dirname "$existing_cert")")
-        # 【中文注释】：从 .go 文件中获取 acme 路径逻辑
-        ACME_PATH="/root/.acme.sh/${domain}_ecc"
-        LOGI "获取到用于 Nginx 配置的域名: ${domain}"
-        LOGI "将使用证书路径: ${ACME_PATH}"
-    else
-        LOGE "Sshwifty 安装失败：无法获取面板域名以配置 Nginx。"
-        LOGE "请先为面板申请 SSL 证书 (菜单项 18 或 19)。"
-        return 1 # 中止安装
-    fi
-    
-    # 【中文注释】：检查证书文件是否存在，这是 .go 文件中的关键检查
-    local CERT_FILE="${ACME_PATH}/fullchain.cer"
-    local KEY_FILE="${ACME_PATH}/${domain}.key"
-    if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
-        LOGE "⚠️ **警告：Nginx 配置失败**"
-        LOGE "错误: 找不到 Nginx 所需的 SSL 证书！"
-        LOGE "检查路径: ${CERT_FILE}"
-        LOGE "检查路径: ${KEY_FILE}"
-        LOGE "Sshwifty 服务将安装，但 Nginx 反代将失败。"
-        # 【中文注释】：我们继续安装，但 Nginx 会跳过
-    fi
-
-    # 0.b 提取 Go 里的 UFW (端口放行) 逻辑
-    LOGI "正在为 Sshwifty 服务配置防火墙..."
-    PORTS_TO_OPEN="8182 8188" # Sshwifty 自身端口和 Nginx 代理端口
-    DEFAULT_PORTS="22 80 443 13688 8443" # 面板运行所需的基础端口
-    
-    if ! command -v ufw &>/dev/null; then
-        LOGI "ufw 防火墙未安装，正在安装..."
-        DEBIAN_FRONTEND=noninteractive apt-get update -qq >/dev/null
-        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ufw >/dev/null
-        if [ $? -ne 0 ]; then LOGE "ufw 安装失败或权限不足。"; return 1; fi
-    fi
-
-    LOGI "正在检查并放行基础服务端口: $DEFAULT_PORTS"
-    for p in $DEFAULT_PORTS; do
-        if ! ufw status | grep -qw "$p/tcp"; then
-            LOGI "端口 $p/tcp 未放行，正在添加规则..."
-            ufw allow $p/tcp >/dev/null
-            if [ $? -ne 0 ]; then LOGE "ufw 端口 $p 放行失败。"; return 1; fi
-        fi
-    done
-    LOGI "基础服务端口检查完毕。"
-
-    LOGI "正在检查并放行 Sshwifty 服务端口: $PORTS_TO_OPEN"
-    for port in $PORTS_TO_OPEN; do
-        if ! ufw status | grep -qw "$port"; then
-            LOGI "正在执行 ufw allow $port..."
-            ufw allow $port >/dev/null
-            if [ $? -ne 0 ]; then LOGE "ufw 端口 $port 放行失败。"; return 1; fi
-        fi
-    done
-
-    if ! ufw status | grep -q "Status: active"; then
-        LOGI "ufw 状态：未激活。正在尝试激活..."
-        ufw --force enable
-        if [ $? -ne 0 ]; then LOGE "ufw 激活失败。"; return 1; fi
-    fi
-    LOGI "✅ 所有端口 ($DEFAULT_PORTS $PORTS_TO_OPEN) 已成功放行/检查。"
-
-    # --- 从这里开始是 Go 脚本中的 shellCommand ---
-    
-    # 0. 检查权限和停止旧服务
-    if [ "$EUID" -ne 0 ]; then
-        LOGE "致命错误：安装脚本必须以 root 权限运行！"
-        return 1
-    fi
-
-    if systemctl is-active --quiet sshwifty; then
-        LOGI "检测到正在运行的 Sshwifty 服务，正在停止..."
-        systemctl stop sshwifty
-    fi
-
-    # 1. 安装依赖
-    LOGI "正在安装依赖: curl, wget, tar, jq..."
-    # 【中文注释】：增加了 jq，用于更可靠地修改 json 配置文件
-    DEPENDENCIES="curl wget tar jq"
-    UNMET_DEPS=""
-    for dep in $DEPENDENCIES; do
-        if ! command -v $dep &>/dev/null; then 
-            UNMET_DEPS="$UNMET_DEPS $dep"
-        fi
-    done
-
-    if [ -n "$UNMET_DEPS" ]; then
-        LOGI "【发现缺失依赖】: $UNMET_DEPS，尝试自动安装..."
-        if command -v apt-get &>/dev/null; then
-        DEBIAN_FRONTEND=noninteractive apt-get update -qq >/dev/null
-            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq $UNMET_DEPS
-            if [ $? -ne 0 ]; then LOGE "错误：使用 apt-get 安装依赖 $UNMET_DEPS 失败！"; return 1; fi
-        elif command -v yum &>/dev/null; then
-            yum install -y -q $UNMET_DEPS
-            if [ $? -ne 0 ]; then LOGE "错误：使用 yum 安装依赖 $UNMET_DEPS 失败！"; return 1; fi
-        else
-            LOGE "致命错误: 无法自动安装依赖 ($UNMET_DEPS)。请手动安装后再试。"
-            return 1
-        fi
-    fi
-    LOGI "依赖检查与安装完成。"
-
-    # 1.b 安装 Nginx
-    if ! command -v nginx &>/dev/null; then
-        LOGI "未检测到 Nginx，正在安装..."
-        if command -v apt-get &>/dev/null; then
-            DEBIAN_FRONTEND=noninteractive apt-get update -qq >/dev/null
-            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nginx
-            if [ $? -ne 0 ]; then LOGE "错误：使用 apt-get 安装 Nginx 失败！"; return 1; fi
-        elif command -v yum &>/dev/null; then
-            yum install -y -q nginx
-            if [ $? -ne 0 ]; then LOGE "错误：使用 yum 安装 Nginx 失败！"; return 1; fi
-        else
-            LOGE "错误: 无法自动安装 nginx。请手动安装后再试。"
-            return 1
-        fi
-        systemctl enable nginx
-        systemctl start nginx
-    else
-        LOGI "检测到 Nginx 已安装，跳过安装步骤。"
-    fi
-
-    # 2. 【重大更新】：自动获取最新版本
-    LOGI "正在从 GitHub API 获取 Sshwifty 最新版本..."
-    DOWNLOAD_URL=$(curl -s "https://api.github.com/repos/nirui/sshwifty/releases/latest" | grep "browser_download_url" | grep "linux_amd64.tar.gz" | cut -d '"' -f 4 | head -n 1)
-
-    if [ -z "$DOWNLOAD_URL" ]; then
-        LOGE "致命错误: 无法自动获取最新的 Sshwifty 下载地址。"
-        LOGE "请检查您的 VPS 是否能访问 GitHub API (api.github.com)。"
-        return 1
-    fi
-    
-    FILENAME=$(basename "$DOWNLOAD_URL")
-    LOGI "获取到最新下载地址: $DOWNLOAD_URL"
-    TEMP_DIR="/tmp/sshwifty_install_$$"
-
-    # 3. 下载并解压
-    LOGI "正在下载 $FILENAME..."
-    rm -rf $TEMP_DIR
-    mkdir -p $TEMP_DIR
-    # 【中文注释】：使用 curl -fsL 替代 wget，-f 失败时静默退出，-s 静默，-L 跟随跳转
-    curl -fsL -o "$TEMP_DIR/$FILENAME" $DOWNLOAD_URL
-    if [ $? -ne 0 ]; then 
-        LOGE "致命错误: 下载 Sshwifty 失败！"
-        rm -rf $TEMP_DIR
-        return 1
-    fi
-
-    LOGI "正在解压文件..."
-    tar -xzvf "$TEMP_DIR/$FILENAME" -C $TEMP_DIR
-    if [ $? -ne 0 ]; then 
-        LOGE "致命错误: 解压 Sshwifty 失败。文件可能已损坏。"
-        rm -rf $TEMP_DIR
-        return 1
-    fi
-
-    # 4. 复制可执行文件并授权
-    INSTALL_PATH="/usr/local/bin/sshwifty"
-    LOGI "正在安装可执行文件到 $INSTALL_PATH..."
-    # 【中文注释】：在解压目录中查找可执行文件
-    BINARY_FILE=$(find $TEMP_DIR -type f \( -name "sshwifty_linux_amd64" -o -name "sshwifty" \) | head -n 1)
-
-    if [ ! -f "$BINARY_FILE" ]; then
-        LOGE "致命错误: 在解压目录中未找到 Sshwifty 可执行文件 ($TEMP_DIR)。"
-        rm -rf $TEMP_DIR
-        return 1
-    fi
-
-    cp "$BINARY_FILE" "$INSTALL_PATH"
-    chmod +x "$INSTALL_PATH"
-    LOGI "安装成功: $INSTALL_PATH"
-
-    # 5. 生成默认配置文件 (保留 IP 修复逻辑)
-    CONFIG_PATH="/etc/sshwifty.conf.json"
-    if [ ! -f "$CONFIG_PATH" ]; then
-        LOGI "正在创建默认配置文件: $CONFIG_PATH..."
-        # 【中文注释】：在解压目录中查找示例配置文件
-        EXAMPLE_CONFIG=$(find $TEMP_DIR -type f -name "*sshwifty.conf.example.json*" | head -n 1)
-        if [ -f "$EXAMPLE_CONFIG" ]; then
-            cp "$EXAMPLE_CONFIG" "$CONFIG_PATH"
-        else
-            # 【中文注释】：如果找不到，创建一个最小配置
-            cat <<EOF > $CONFIG_PATH
-{
-    "Host": "127.0.0.1", 
-    "Port": 8182,
-    "Debug": false,
-    "Title": "Sshwifty Web SSH"
-}
-EOF
-        fi
-        # 【中文注释】：确保 Host 正确设置为 127.0.0.1
-        jq '.Host = "127.0.0.1"' $CONFIG_PATH > $CONFIG_PATH.tmp && mv $CONFIG_PATH.tmp $CONFIG_PATH
-        LOGI "默认配置文件已创建并修正。"
-    else
-        LOGI "配置文件 $CONFIG_PATH 已存在，跳过创建。"
-        # 【中文注释】：确保 Host 正确设置为 127.0.0.1
-        jq '.Host = "127.0.0.1"' $CONFIG_PATH > $CONFIG_PATH.tmp && mv $CONFIG_PATH.tmp $CONFIG_PATH
-        LOGI "确保 $CONFIG_PATH 监听 127.0.0.1 (使用 jq)"
-    fi
-
-    # 6. 创建 systemd 服务文件
-    SERVICE_PATH="/etc/systemd/system/sshwifty.service"
-    LOGI "正在创建 systemd 服务: $SERVICE_PATH..."
-    cat <<EOF > $SERVICE_PATH
-[Unit]
-Description=Sshwifty - Web SSH Client
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=$INSTALL_PATH --config $CONFIG_PATH
-User=root
-Restart=on-failure
-RestartSec=5
-KillMode=process
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    # 7. 重新加载、启用并启动服务
-    LOGI "正在配置 systemd 服务 (开机自启)..."
-    systemctl daemon-reload
-    systemctl enable sshwifty
-    systemctl restart sshwifty
-
-    # 8. 清理临时文件
-    LOGI "正在清理临时文件..."
-    rm -rf $TEMP_DIR
-
-    # 9. 检查服务状态
-    if ! systemctl is-active --quiet sshwifty; then
-        LOGE "致命错误: Sshwifty 服务启动失败！请检查 8182 端口是否被占用，或查看以下日志："
-        journalctl -u sshwifty -n 20 --no-pager
-        return 1
-    fi
-    LOGI "✅ Sshwifty (8182 端口) 启动成功。"
-
-    # 10. 配置 Nginx 反向代理
-    LOGI "=== 开始配置 Nginx 反向代理 (8188 -> 8182) ==="
-    DOMAIN="${domain}" # <--- 这里使用我们之前获取的变量
-
-    if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
-        LOGE "⚠️ **警告：Nginx 配置跳过**"
-        LOGE "错误: 找不到 Nginx 所需的 SSL 证书！Sshwifty 服务已运行在 127.0.0.1:8182。"
-    else
-        # 【中文注释】：移植 Go 代码中的证书复制逻辑
-        mkdir -p /etc/nginx/ssl
-        cp "${CERT_FILE}" "/etc/nginx/ssl/${DOMAIN}.cer"
-        cp "${KEY_FILE}" "/etc/nginx/ssl/${DOMAIN}.key"
-
-        cat > /etc/nginx/conf.d/sshwifty-proxy.conf <<EOF
-# --- Sshwifty (Web SSH) 反向代理配置 ---
-server {
-    listen 8188 ssl http2;
-    server_name ${DOMAIN};
-    # 【中文注释】：使用复制后的证书路径
-    ssl_certificate       /etc/nginx/ssl/${DOMAIN}.cer;
-    ssl_certificate_key /etc/nginx/ssl/${DOMAIN}.key;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    location / {
-        proxy_pass http://127.0.0.1:8182;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    }
-}
-EOF
-        LOGI "正在重载 Nginx..."
-        if ! systemctl reload nginx; then
-            LOGE "错误: Nginx 重载失败。请检查配置。"
-        fi
-        LOGI "✅ Nginx 反向代理配置成功。"
-    fi
-
-    LOGI "=== Sshwifty 安装并启动成功! ==="
-    
-    # 【中文注释】：安装完成后向用户显示最终访问信息
-    echo ""
-    echo -e "${green}🎉 恭喜！【网页版SSH】模块已成功安装！${plain}"
-    echo ""
-    echo -e "${green}已自动为您配置 Nginx 反向代理。${plain}"
-    echo ""
-    echo -e "${green}您现在可以使用以下地址访问 Web 界面：${plain}"
-    echo ""
-    echo -e "🔗 ${yellow}登录地址: https://${DOMAIN}:8188${plain}"
-    echo ""
-    echo -e "${green}默认登录口令为： ${yellow}WEB_ACCESS_PASSWORD${plain}"
-    echo ""
-    echo -e "${green}(如果无法登录，请在 /etc/sshwifty.conf.json 中查看或设置口令)${plain}"
-    echo ""
-    
-    before_show_menu
-}
-
-# 【中文注释】：这是新添加的“线路和IP检测”相关函数
-ip_check() {
-    # 【中文注释】：功能 1：检测 IP
-    bash <(curl -Ls https://Check.Place) -I
-    before_show_menu
-}
-
-route_check() {
-    # 【中文注释】：功能 2：检测线路
-    bash <(curl -Ls https://Check.Place) -N
-    before_show_menu
-}
-
-check_place_menu() {
-    # 【中文注释】：这是选项 27 的子菜单
-    echo -e "
-  ${green}线路和IP检测 (Check.Place)${plain}
-  
-  ${green}1.${plain} 检测 IP 质量
-  ${green}2.${plain} 检测 线路/路由
-  ——————————————————————
-  ${green}0.${plain} 返回主菜单
-  "
-    read -p "请输入选项 [0-2]: " num
-    case "${num}" in
-    0)
-        show_menu
-        ;;
-    1)
-        ip_check
-        ;;
-    2)
-        route_check
-        ;;
-    *)
-        LOGE "请输入正确的数字选项 [0-2]!"
-        ;;
-    esac
-}
-
-# 【中文注释】：这是新添加的“服务器DNS检测”函数
-dns_check() {
-    echo ""
-    
-    # 【中文注释】：定义临时文件保存路径
-    local script_file="/tmp/dnsjc.sh"
-    
-    # 【中文注释】：第一步：下载脚本
-    # 使用 curl 下载，通过 tr 删除可能存在的 Windows 换行符(\r)，然后写入临时文件
-    # 这样做可以确保 stdin（标准输入）不被占用，read 命令才能正常工作
-    echo "正在下载检测脚本..."
-    curl -Ls https://raw.githubusercontent.com/xeefei/X-Panel/master/dnsjc.sh | tr -d '\r' > "$script_file"
-    
-    # 【中文注释】：第二步：检查文件是否下载成功（文件存在且大小不为0）
-    if [ -s "$script_file" ]; then
-        # 【中文注释】：第三步：赋予脚本执行权限
-        chmod +x "$script_file"
-        
-        # 【中文注释】：第四步：直接执行脚本
-        # 此时脚本接管前台，你可以正常输入国家名称
-        "$script_file"
-        
-        # 【中文注释】：第五步：执行完毕后删除临时文件，保持系统整洁
-        rm -f "$script_file"
-    else
-        echo "错误：脚本下载失败，请检查网络连接。"
-    fi
-    
-    # 【中文注释】：检查是否是作为非交互式命令调用的
-    # 如果 $# (参数个数) 为 0，说明是从菜单调用的，执行完后返回主菜单
-    if [[ $# == 0 ]]; then
-        before_show_menu
-    fi
-    # 【中文注释】：如果参数个数不为 0 (例如 '0')，说明是命令行调用的，函数结束
-}
-
-# =========================================================
-# 【新功能】: 系统内核深度调优 (集成 TCP/BBR/内存优化)
-# =========================================================
-
-# 调优主菜单 (交互入口)
-system_tuning_menu() {
-    echo -e "
-  ${green}系统内核深度调优 (基于内存智能计算)${plain}
-
-  ${yellow}包含 BBR+FQ, TCP Fast Open, 缓冲区及队列优化${plain}
-  ——————————————————————
-  ${green}1.${plain} 智能分析硬件并应用优化 (推荐)
-  
-  ${green}2.${plain} “还原/卸载” 所有优化
-  
-  ${green}0.${plain} 返回主菜单
-  "
-    echo && read -p "请输入选项 [0-2]: " num
-    case "${num}" in
-    0) show_menu ;;
-    1) optimize_system ;;
-    2) revert_optimization ;;
-    *) LOGE "请输入正确的数字 [0-2]"; system_tuning_menu ;;
-    esac
-}
-
-# 计算并应用优化配置
-optimize_system() {
-    local sysctl_conf="/etc/sysctl.d/xpanel-optimized.conf"
-
-    # ============================================
-    # 【新增】: 自动检测当前 BBR 状态
-    # ============================================
-    local current_cc=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)
-    local current_qdisc=$(sysctl -n net.core.default_qdisc 2>/dev/null)
-
-    echo ""
-    LOGI "正在进行环境预检..."
-    sleep 1
-    if [[ "$current_cc" == "bbr" && "$current_qdisc" == "fq" ]]; then
-        echo -e "  - 当前状态: ${green}已开启 BBR + FQ${plain}"
-        echo -e "  - 操作目标: ${yellow}将基于当前环境执行【深度参数调优/升级】${plain}"
-    else
-        echo -e "  - 当前状态: ${red}未完全开启 BBR (当前: ${current_cc:-未知})${plain}"
-        echo -e "  - 操作目标: ${green}准备进行【全新安装与优化】${plain}"
-    fi
-    echo ""
-
-    # 1. 硬件检测
-    local total_mem=$(free -m | awk '/^Mem:/{print $2}' | tr -d '\r')
-    local cpu_cores=$(nproc)
-    
-    LOGI "正在检测系统硬件状态..."
-    sleep 1
-    echo -e "  - 物理内存: ${green}${total_mem} MB${plain}"
-    echo -e "  - CPU 核心:  ${green}${cpu_cores} 核${plain}"
-    echo ""
-
-    # 2. 动态参数计算 (基于内存分级算法)
-    local rmem_max wmem_max somaxconn tier
-    
-    if [ "$total_mem" -le 512 ]; then
-        tier="入门级 (Entry)"
-        rmem_max=$((8 * 1024 * 1024))
-        wmem_max=$((8 * 1024 * 1024))
-        somaxconn="4096"
-    elif [ "$total_mem" -le 1024 ]; then
-        tier="轻量级 (Light)"
-        rmem_max=$((16 * 1024 * 1024))
-        wmem_max=$((16 * 1024 * 1024))
-        somaxconn="16384"
-    elif [ "$total_mem" -le 4096 ]; then
-        tier="标准级 (Standard)"
-        rmem_max=$((32 * 1024 * 1024))
-        wmem_max=$((32 * 1024 * 1024))
-        somaxconn="32768"
-    elif [ "$total_mem" -le 8192 ]; then
-        tier="高性能级 (HighPerf)"
-        rmem_max=$((64 * 1024 * 1024))
-        wmem_max=$((64 * 1024 * 1024))
-        somaxconn="65535"
-    # 【修改】else 变成了大于 8GB 的旗舰配置
-    else
-        tier="旗舰级 (Flagship)"
-        # 给 16G+ 内存机器分配 128MB 缓冲区（适合 10Gbps+ 专线）
-        rmem_max=$((128 * 1024 * 1024))
-        wmem_max=$((128 * 1024 * 1024))
-        somaxconn="65535"
-    fi
-    
-    LOGI "匹配优化等级: ${yellow}${tier}${plain}"
-
-    # 计算 TCP 缓冲区 (Min Default Max)
-    local rmem_default=$((rmem_max / 4))
-    local wmem_default=$((wmem_max / 4))
-    local tcp_rmem="4096 $rmem_default $rmem_max"
-    local tcp_wmem="4096 $wmem_default $wmem_max"
-
-    # 3. 备份旧配置 (如果存在)
-    sleep 1
-    if [ -f "$sysctl_conf" ]; then
-        cp "$sysctl_conf" "${sysctl_conf}.bak"
-        LOGI "检测到旧的优化配置文件，已自动备份。"
-    fi
-    
-    # 确保目录存在
-    mkdir -p /etc/sysctl.d
-
-    # 4. 写入新配置 (融合最佳实践)
-    cat > "$sysctl_conf" << EOF
-# ==============================================================================
-# X-Panel-Pro Linux Network Optimization
-# Optimization Tier: ${tier} | Memory: ${total_mem}MB
-# Generated by X-Panel-Pro Script
-# ==============================================================================
-
-# --- 核心 BBR 拥塞控制 ---
-net.core.default_qdisc = fq
-net.ipv4.tcp_congestion_control = bbr
-
-# --- TCP 缓冲区优化 (动态计算) ---
-net.core.rmem_max = ${rmem_max}
-net.core.wmem_max = ${wmem_max}
-net.ipv4.tcp_rmem = ${tcp_rmem}
-net.ipv4.tcp_wmem = ${tcp_wmem}
-
-# --- 连接队列优化 ---
-net.core.somaxconn = ${somaxconn}
-net.core.netdev_max_backlog = ${somaxconn}
-net.ipv4.tcp_max_syn_backlog = ${somaxconn}
-
-# --- TCP 连接行为优化 ---
-net.ipv4.tcp_slow_start_after_idle = 0
-net.ipv4.tcp_notsent_lowat = 16384
-net.ipv4.tcp_window_scaling = 1
-
-# --- Time-Wait 状态优化 ---
-net.ipv4.tcp_fin_timeout = 15
-net.ipv4.tcp_tw_reuse = 1
-net.ipv4.tcp_max_tw_buckets = 262144
-
-# --- Keepalive 优化 (防止 SSH/代理断连) ---
-net.ipv4.tcp_keepalive_time = 600
-net.ipv4.tcp_keepalive_intvl = 30
-net.ipv4.tcp_keepalive_probes = 6
-
-# --- 高级特性 ---
-# TCP Fast Open (减少握手延迟, 3 = 开启客户端和服务器端)
-net.ipv4.tcp_fastopen = 3
-# MTU 探测 (解决部分网络环境下的黑洞问题)
-net.ipv4.tcp_mtu_probing = 1
-
-# --- 系统通用资源限制 ---
-fs.file-max = 2097152
-vm.swappiness = 10
-EOF
-    sleep 1
-    echo ""
-    LOGI "配置文件写入成功: ${sysctl_conf}"
-
-    # 5. 应用配置
-    sleep 2
-    # 使用 -p 指定文件加载，会立即覆盖掉系统中可能存在的旧参数
-    if sysctl -p "$sysctl_conf" >/dev/null 2>&1; then
-        LOGI "-------->>>>〔所有系统内核参数〕加载成功！"
-    else
-        # 尝试 system 全量加载作为后备
-        sysctl --system >/dev/null 2>&1
-        LOGI "使用 sysctl --system 强制加载完成。"
-    fi
-
-    # 6. 验证 BBR
-    local cc=$(sysctl -n net.ipv4.tcp_congestion_control)
-    local qdisc=$(sysctl -n net.core.default_qdisc)
-    sleep 2
-    
-    echo ""
-    echo -e "------------- 验证结果 -------------"
-    if [[ "$cc" == "bbr" && "$qdisc" == "fq" ]]; then
-        echo -e "拥塞控制算法: ${green}${cc}${plain}"
-        echo -e "队列调度策略: ${green}${qdisc}${plain}"
-        echo -e "${green}恭喜！系统内核深度优化已成功生效！${plain}"
-    else
-        echo -e "拥塞控制算法: ${red}${cc}${plain}"
-        LOGE "警告：BBR 未能正确开启，请检查您的系统内核是否支持 (需 4.9+)。"
-    fi
-    
-    echo ""
-    read -p "按回车键返回......" temp
-    system_tuning_menu
-}
-
-# 还原优化
-revert_optimization() {
-    local sysctl_conf="/etc/sysctl.d/xpanel-optimized.conf"
-
-    confirm "确定要移除所有优化配置并恢复默认吗？" "n"
-    if [[ $? != 0 ]]; then
-        system_tuning_menu
-    fi
-
-    if [ -f "$sysctl_conf" ]; then
-        rm -f "$sysctl_conf"
-        LOGI "已删除优化配置文件: $sysctl_conf"
-    else
-        LOGE "未找到优化配置文件，可能尚未安装。"
-    fi
-    
-    LOGI "正在重载系统默认设置..."
-    sysctl --system >/dev/null 2>&1
-    
-    echo -e "${green}系统已恢复默认配置。建议重启服务器以彻底清理缓存。${plain}"
-    echo ""
-    read -p "按回车键返回......" temp
-    system_tuning_menu
-}
-
-# =========================================================
-# [新增功能] 远程备份与急救还原 (SSH版 - 增强兼容版)
-# 逻辑与 Web Go 端保持一致，用于面板崩溃时的紧急救援
-# =========================================================
-
-# 30-0. 智能依赖检查与安装 (兼容 Debian/Ubuntu/CentOS/Alpine)
-check_zip_tools() {
-    # 1. 检查工具是否已存在
-    echo ""
-    if command -v zip >/dev/null 2>&1 && command -v unzip >/dev/null 2>&1; then
-        LOGI "环境检查：zip/unzip 工具已安装。"
-        return 0
-    fi
-    
-    LOGI "检测到系统缺少 zip 或 unzip 组件，正在尝试自动安装......"
-    sleep 2
-    
-    # 2. 根据脚本开头获取的 release 变量选择安装方式
-    # (如果脚本开头未定义 release，尝试手动获取)
-    if [[ -z "$release" ]]; then
-        if [[ -f /etc/os-release ]]; then source /etc/os-release; release=$ID; fi
-    fi
-
-    case "${release}" in
-        centos|almalinux|rocky|oracle|fedora)
-            if command -v dnf >/dev/null 2>&1; then
-                dnf install -y zip unzip
-            else
-                yum install -y zip unzip
-            fi
-            ;;
-        ubuntu|debian|armbian|kali)
-            # -qq 减少输出，但保留错误信息
-            apt-get update >/dev/null 2>&1
-            apt-get install -y zip unzip
-            ;;
-        alpine)
-            apk add --no-cache zip unzip
-            ;;
-        arch|manjaro)
-            pacman -Sy --noconfirm zip unzip
-            ;;
-        *)
-            # 兜底策略：如果识别不出系统，尝试常见命令
-            if command -v apt-get >/dev/null 2>&1; then
-                apt-get update && apt-get install -y zip unzip
-            elif command -v yum >/dev/null 2>&1; then
-                yum install -y zip unzip
-            else
-                LOGE "无法自动安装 zip 工具，请您手动执行安装命令后重试。"
-                return 1
-            fi
-            ;;
-    esac
-
-    # 3. 二次检查
-    if command -v zip >/dev/null 2>&1 && command -v unzip >/dev/null 2>&1; then
-        LOGI "zip/unzip 工具安装成功！"
-        echo ""
-        sleep 2
-    else
-        LOGE "安装失败，请检查网络或手动安装 zip 和 unzip。"
-        return 1
-    fi
-}
-
-# 30-1. 远程备份功能
-remote_backup() {
-    # 运行前先检查 zip 工具
-    check_zip_tools || return 1
-    echo ""
-    sleep 1
-    
-    # 定义关键路径和变量
-    local LICENSE_FILE="/usr/local/x-ui/bin/license.key"
-    local DB_FILE="/etc/x-ui/x-ui.db"
-    local CONFIG_FILE="/usr/local/x-ui/bin/config.json"
-    # PHP 接口地址
-    local API_URL="https://auth.x-panel.vip/backup_api.php"
-    
-    echo -e "${yellow}正在执行“远程备份操作”......${plain}"
-    sleep 2
-    echo ""
-
-    # 1. 检查授权文件
-    if [[ ! -f "$LICENSE_FILE" ]]; then
-        LOGE "错误：未找到“授权文件”，无法验证身份，备份终止。"
-        [[ $# -eq 0 ]] && before_show_menu
-        return 1
-    fi
-    local LICENSE_KEY=$(cat "$LICENSE_FILE" | tr -d '\n\r')
-
-    # 检查数据库文件
-    if [[ ! -f "$DB_FILE" ]]; then
-        LOGE "错误：未找到数据库文件 (x-ui.db)，面板可能已损坏，备份终止。"
-        [[ $# -eq 0 ]] && before_show_menu
-        return 1
-    fi
-
-    # 检查配置文件 config.json 
-    if [[ ! -f "$CONFIG_FILE" ]]; then
-        LOGE "错误：未找到配置文件 (config.json)，数据不完整，备份终止。"
-        [[ $# -eq 0 ]] && before_show_menu
-        return 1
-    fi
-
-    # 2. 动态获取本机 IP (用于 PHP 端校验)
-    # [优化逻辑] 优先 IPv4，失败则尝试 IPv6 (与 Go 端逻辑完全同步)
-    
-    # 尝试 1: IPv4 优先 (curl -4)
-    local SERVER_IP=$(curl -s4m5 https://api.ip.sb/ip -k)
-    
-    if [[ -z "$SERVER_IP" ]]; then
-        # 尝试 2: 如果 api.ip.sb 的 IPv4 失败，试 ifconfig.me 的 IPv4
-        SERVER_IP=$(curl -s4m5 https://ifconfig.me/ip -k)
-    fi
-
-    # 尝试 3: [新增] 如果上述 IPv4 都获取不到，说明可能是纯 IPv6 机器
-    # 此时尝试强制使用 IPv6 (curl -6)
-    if [[ -z "$SERVER_IP" ]]; then
-        SERVER_IP=$(curl -s6m5 https://api.ip.sb/ip -k)
-    fi
-
-    # 尝试 4: 兜底 (不带参数，自动协商)
-    if [[ -z "$SERVER_IP" ]]; then
-        SERVER_IP=$(curl -s -m 5 https://api.ipify.org -k)
-    fi
-    
-    sleep 2
-    LOGI "授权身份验证中... (License: ...${LICENSE_KEY: -6} / IP: $SERVER_IP)"
-    echo ""
-
-    # 3. 准备临时目录打包
-    local TMP_DIR="/tmp/xui_backup_tmp_$(date +%s)"
-    local TMP_ZIP="/tmp/xui_backup_$(date +%s).zip"
-    
-    mkdir -p "$TMP_DIR"
-    
-    # 4. 复制两个文件
-    cp "$DB_FILE" "$TMP_DIR/x-ui.db"
-    cp "$CONFIG_FILE" "$TMP_DIR/config.json"
-
-    # 进入目录打包，确保压缩包内不含路径前缀 (和 Go 端逻辑一致)
-    # [修改点] 使用 -j 参数强制忽略路径，确保 ZIP 根目录就是 db 和 json
-    cd "$TMP_DIR"
-    zip -q -j "$TMP_ZIP" "./x-ui.db" "./config.json"
-    if [[ $? -ne 0 ]]; then
-        LOGE "文件打包失败！请检查磁盘空间或文件权限。"
-        rm -rf "$TMP_DIR" "$TMP_ZIP"
-        [[ $# -eq 0 ]] && before_show_menu
-        return 1
-    fi
-
-    # 5. 转 Base64 编码
-    local DATA_BASE64=$(base64 -w 0 "$TMP_ZIP")
-
-    sleep 1
-    # 6. 上传至 PHP 接口
-    LOGI "正在加密上传“备份数据”至云端......"
-    RESPONSE=$(curl -s -X POST "$API_URL" \
-        -d "action=backup" \
-        -d "key=$LICENSE_KEY" \
-        -d "ip=$SERVER_IP" \
-        --data-urlencode "data=$DATA_BASE64")
-
-    # 7. 清理临时文件
-    cd ~
-    rm -rf "$TMP_DIR" "$TMP_ZIP"
-
-    # 8. 解析结果并提示
-    if echo "$RESPONSE" | grep -q '"success":true'; then
-        echo ""
-        sleep 2
-        echo -e "${green}✅ ------>>>> 备份成功！！！${plain}"
-        echo ""
-        sleep 1
-        echo -e "${green}您的 x-ui.db 和 config.json 已成功同步至云端。${plain}"
-        echo ""
-    else
-        echo ""
-        echo -e "${red}❌ [备份失败]${plain}"
-        echo -e "服务器返回错误信息: $RESPONSE"
-        echo ""
-    fi
-
-    # [修改点] 判断是菜单调用还是命令行调用
-    if [[ $# > 0 ]]; then
-        return 0
-    else
-        before_show_menu
-    fi
-}
-
-# 30-2. 急救还原功能
-rescue_restore() {
-    # 运行前先检查环境组件
-    check_zip_tools || return 1
-    echo ""
-
-    # 定义关键路径和变量
-    local LICENSE_FILE="/usr/local/x-ui/bin/license.key"
-    local API_URL="https://auth.x-panel.vip/backup_api.php"
-    local DB_PATH="/etc/x-ui/x-ui.db"
-    local CONFIG_PATH="/usr/local/x-ui/bin/config.json"
-
-    echo -e "${yellow}====== ⚠️ 急救还原模式 ⚠️ ======${plain}"
-    echo ""
-    echo -e "1、此操作将从云端拉取“该机器”对应的最新备份。"
-    echo ""
-    echo -e "2、并且会${red}〔强制覆盖〕${plain}您当前的“面板数据库配置”。"
-    echo ""
-    echo -e "3、还原结束时面板将“自动重启”，以应用〔配置更改〕。"
-    echo ""
-    echo -e "4、作用：当在面板无法打开/访问时，即可使用此功能挽救。"
-    echo ""
-    
-    # 如果是带参数运行，默认视为已确认，不弹交互确认
-    if [[ $# -eq 0 ]]; then
-        confirm "您确定要继续吗?" "n"
-        if [[ $? != 0 ]]; then
-            before_show_menu
-            return 0
-        fi
-    fi
-
-    # 1. 验证必要文件
-    if [[ ! -f "$LICENSE_FILE" ]]; then
-        LOGE "未找到“授权文件”，无法验证身份。"
-        [[ $# -eq 0 ]] && before_show_menu
-        return 1
-    fi
-    local LICENSE_KEY=$(cat "$LICENSE_FILE" | tr -d '\n\r')
-
-    # 2. 获取 IP (必须与备份时的 IP 一致)
-    local SERVER_IP=$(curl -s4m8 http://ip.sb -k)
-    if [[ -z "$SERVER_IP" ]]; then
-        SERVER_IP=$(curl -s6m8 http://ip.sb -k)
-    fi
-    if [[ -z "$SERVER_IP" ]]; then
-        SERVER_IP=$(curl -s https://api.ipify.org)
-    fi
-
-    echo ""
-    sleep 2
-    LOGI "正在连接云端“拉取备份数据”...... (IP: $SERVER_IP)"
-
-    # 3. 发起请求
-    RESPONSE=$(curl -s -X POST "$API_URL" \
-        -d "action=restore" \
-        -d "key=$LICENSE_KEY" \
-        -d "ip=$SERVER_IP")
-
-    # 4. 验证响应
-    if ! echo "$RESPONSE" | grep -q '"success":true'; then
-        LOGE "云端请求失败，未找到该机器的备份记录。"
-        echo -e "详细信息: $RESPONSE"
-        [[ $# -eq 0 ]] && before_show_menu
-        return 1
-    fi
-
-    # 5. 提取 Base64 数据
-    # 使用 sed 精确提取 JSON 中的 data 字段
-    echo ""
-    LOGI "备份数据下载成功，正在解析......"
-    sleep 1
-
-    # [优化] 使用更严谨的提取方式，去掉可能存在的干扰字符
-    local REMOTE_DATA=$(echo "$RESPONSE" | sed 's/\\//g' | sed -n 's/.*"data":"\([^"]*\)".*/\1/p')
-
-    if [[ -z "$REMOTE_DATA" ]]; then
-        LOGE "解析失败：云端返回的数据为空。"
-        [[ $# -eq 0 ]] && before_show_menu
-        return 1
-    fi
-
-    # 6. 解码与解压
-    local TMP_RESTORE_ZIP="/tmp/xui_restore_$(date +%s).zip"
-    local TMP_RESTORE_DIR="/tmp/xui_restore_dir_$(date +%s)"
-    mkdir -p "$TMP_RESTORE_DIR"
-
-    # Base64 解码
-    echo "$REMOTE_DATA" | base64 -d > "$TMP_RESTORE_ZIP"
-
-    # 检查文件完整性
-    if [[ ! -s "$TMP_RESTORE_ZIP" ]]; then
-        LOGE "文件解码错误，文件大小为 0。"
-        rm -rf "$TMP_RESTORE_ZIP" "$TMP_RESTORE_DIR"
-        return 1
-    fi
-
-    # 解压
-    unzip -o -q "$TMP_RESTORE_ZIP" -d "$TMP_RESTORE_DIR"
-    
-    if [[ $? -ne 0 ]]; then
-        # 兼容逻辑：如果不是 ZIP，尝试作为纯 DB 恢复
-        LOGI "ZIP 解压失败，尝试兼容模式还原数据库..."
-        cp -f "$TMP_RESTORE_ZIP" "$DB_PATH"
-        if [[ $? -eq 0 ]]; then
-            LOGI "✅ “数据库文件”已恢复"
-        else
-            LOGE "❌ 恢复失败：无法识别备份文件格式。"
-            rm -rf "$TMP_RESTORE_ZIP" "$TMP_RESTORE_DIR"
-            return 1
-        fi
-    else
-        echo ""
-        sleep 2
-        # 7. 严格还原逻辑：必须两个文件都存在
-        LOGI "正在校验备份完整性......"
-        echo ""
-        
-        if [[ ! -f "$TMP_RESTORE_DIR/x-ui.db" ]] || [[ ! -f "$TMP_RESTORE_DIR/config.json" ]]; then
-            LOGE "还原失败：云端备份包数据不完整（缺少 db 或 json），为了安全已终止还原。"
-            rm -rf "$TMP_RESTORE_ZIP" "$TMP_RESTORE_DIR"
-            [[ $# -eq 0 ]] && before_show_menu
-            return 1
-        fi
-
-        # 校验通过，开始执行物理覆盖
-        LOGI "校验通过，正在覆盖本机文件......"
-        echo ""
-        sleep 2
-        
-        cp -f "$TMP_RESTORE_DIR/x-ui.db" "$DB_PATH"
-        echo -e " ------>>> 数据库 (x-ui.db) 已覆盖"
-        echo ""
-
-        sleep 1
-        cp -f "$TMP_RESTORE_DIR/config.json" "$CONFIG_PATH"
-        echo -e " ------>>> 配置文件 (config.json) 已覆盖"
-        echo ""
-
-        LOGI "✅ 所有“核心文件”已还原。"
-        echo ""
-    fi
-
-    # 8. 清理并重启
-    rm -rf "$TMP_RESTORE_ZIP" "$TMP_RESTORE_DIR"
-
-    echo ""
-    sleep 1
-    echo -e "${green}✅ ------>>>> 还原成功！！！${plain}"
-    echo ""
-    echo -e "“面板配置”已恢复到最新备份状态。"
-    echo ""
-    sleep 1
-    echo -e "${yellow}正在“重启面板”以应用更改，请稍候......${plain}"
-    echo ""
-    sleep 2
-    
-    # 强制重启
-    restart 0
-}
-
-# =========================================================
-# [新增功能 【第31项】] 数据库一键迁移 (跨 VPS 迁移)
-# 同时打包传输 x-ui.db 和 config.json，并自动替换 IP/域名
-# =========================================================
-migrate_database() {
-    check_zip_tools || return 1
-    echo ""
-    echo -e "${yellow}==================================================${PLAIN}"
-    echo -e "${yellow}       X-Panel-Pro 跨服务器“面板数据库”一键迁移工具       ${PLAIN}"
-    echo -e "${yellow}==================================================${PLAIN}"
-    echo -e "${green}提示：请在【新 VPS】上运行此选项，它将自动拉取旧 VPS 的数据库与配置文件。${plain}\n"
-
-    read -rp "请输入旧 VPS 的 IP 地址: " OLD_IP
-    [[ -z "$OLD_IP" ]] && LOGE "旧 IP 不能为空！" && before_show_menu && return 1
-    sleep 1
-    echo ""
-
-    read -rp "请输入旧 VPS 的 SSH 端口 (默认 22): " OLD_PORT
-    OLD_PORT=${OLD_PORT:-22}
-    echo ""
-    sleep 1
-
-    read -rp "请输入旧 VPS 的 root 密码: " OLD_PASSWORD
-    [[ -z "$OLD_PASSWORD" ]] && LOGE "密码不能为空！" && before_show_menu && return 1
-    sleep 1
-    echo ""
-
-    # 获取当前新 VPS 的 IP
-    local NEW_IP=$(curl -s4m5 http://ip.sb -k)
-    [[ -z "$NEW_IP" ]] && NEW_IP=$(curl -s6m5 http://ip.sb -k)
-    [[ -z "$NEW_IP" ]] && NEW_IP=$(curl -s https://api.ipify.org)
-    echo -e "${green}---->> 检测到当前新 VPS 的 IP 为: ${NEW_IP}${plain}"
-    sleep 2
-    echo ""
-
-    # 检查并安装 sshpass
-    if ! command -v sshpass &> /dev/null; then
-        echo -e "${yellow}正在安装必要依赖 (sshpass)...${plain}"
-        echo ""
-        if [[ -f /etc/debian_version ]]; then
-            apt-get update && apt-get install -y sshpass
-        elif [[ -f /etc/redhat-release ]]; then
-            yum install -y epel-release && yum install -y sshpass
-        fi
-    fi
-    sleep 1
-    echo ""
-
-    echo -e "\n${yellow}[1/5] 正在连接旧 VPS 并打包数据库与配置文件......${plain}"
-    echo ""
-    sshpass -p "$OLD_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$OLD_PORT" root@"$OLD_IP" << 'EOF'
-    if [ -d "/etc/x-ui" ] && [ -f "/etc/x-ui/x-ui.db" ]; then
-        cd /tmp
-        rm -rf xpanel_migration_pkg.zip
-        # 同时打包 x-ui.db 和 config.json
-        if [ -f "/usr/local/x-ui/bin/config.json" ]; then
-            zip -q -j xpanel_migration_pkg.zip /etc/x-ui/x-ui.db /usr/local/x-ui/bin/config.json
-        else
-            zip -q -j xpanel_migration_pkg.zip /etc/x-ui/x-ui.db
-        fi
-        echo "PACK_SUCCESS"
-    else
-        echo "DIR_NOT_FOUND"
-    fi
-EOF
-
-    if [ $? -ne 0 ]; then
-        LOGE "错误：连接旧 VPS 失败，请检查 IP、端口或 “root密码” 是否正确?"
-        before_show_menu
-        return 1
-    fi
-
-    sleep 2
-    echo ""
-    echo ""
-    echo -e "${yellow}[2/5] 正在将“迁移数据包”下载到新 VPS......${plain}"
-    sshpass -p "$OLD_PASSWORD" scp -o StrictHostKeyChecking=no -P "$OLD_PORT" root@"$OLD_IP":/tmp/xpanel_migration_pkg.zip /tmp/xpanel_migration_pkg.zip
-
-    echo ""
-    if [ ! -f "/tmp/xpanel_migration_pkg.zip" ]; then
-        LOGE "错误：迁移包下载失败！"
-        before_show_menu
-        return 1
-    fi
-    echo -e "${green}-------->>> “迁移数据包”下载成功！${plain}"
-    sleep 2
-
-    echo ""
-    echo -e "${yellow}[3/5] 正在新 VPS 上停止“面板服务”......${plain}"
-    systemctl stop x-ui 2>/dev/null
-
-    mkdir -p /etc/x-ui
-    mkdir -p /usr/local/x-ui/bin
-    sleep 2
-
-    echo ""
-    echo -e "${yellow}[4/5] 正在解压并恢复数据库与配置文件......${plain}"
-    mkdir -p /tmp/xpanel_extracted
-    unzip -o -q /tmp/xpanel_migration_pkg.zip -d /tmp/xpanel_extracted/
-
-    sleep 1
-    echo ""
-    if [ -f "/tmp/xpanel_extracted/x-ui.db" ]; then
-        cp -f /tmp/xpanel_extracted/x-ui.db /etc/x-ui/x-ui.db
-        echo -e "${green} -------->>> 数据库 (x-ui.db) 恢复成功${plain}"
-    fi
-    sleep 1
-    echo ""
-    if [ -f "/tmp/xpanel_extracted/config.json" ]; then
-        cp -f /tmp/xpanel_extracted/config.json /usr/local/x-ui/bin/config.json
-        echo -e "${green} -------->>> 配置文件 (config.json) 恢复成功${plain}"
-    fi
-
-    sleep 2
-    echo ""
-    # 5. 自动批量替换数据库中的旧 IP/域名 为 新 IP/域名
-    echo -e "${yellow}[5/5] 智能修正数据库中的旧 IP/域名节点信息......${plain}"
-    
-    echo ""
-    # 【第一步】：先问用户旧机器用的是什么（作为查找条件）
-    read -rp "请输入旧 VPS 之前绑定的【旧 IP 或旧域名】(若无需替换请直接回车跳过): " OLD_HOST
-    sleep 1
-    echo ""
-
-    if [ -n "$OLD_HOST" ]; then
-        # 获取当前新 VPS 的默认 IP 作为参考
-        local DEFAULT_NEW_IP=$(curl -s4m5 http://ip.sb -k)
-        [[ -z "$DEFAULT_NEW_IP" ]] && DEFAULT_NEW_IP=$(curl -s6m5 http://ip.sb -k)
-        [[ -z "$DEFAULT_NEW_IP" ]] && DEFAULT_NEW_IP=$(curl -s https://api.ipify.org)
-        
-        echo -e "${green}--->> 检测到当前新 VPS 的默认 IP 为: ${DEFAULT_NEW_IP}${plain}"
-    sleep 2
-    echo ""
-        
-        # 【第二步】：再问用户新机器要生效的是什么（作为替换目标，默认是新机器IP，也可以手动输新域名）
-        read -rp "请输入迁移后需要生效的【新 IP 或新域名】(直接回车默认使用新 IP: $DEFAULT_NEW_IP): " NEW_HOST
-        NEW_HOST=${NEW_HOST:-$DEFAULT_NEW_IP}
-    sleep 1
-
-        # 执行数据库批量替换（修复了原先 address 列不存在导致的报错）
-        if [ -f "/etc/x-ui/x-ui.db" ]; then
-            if ! command -v sqlite3 &> /dev/null; then
-                apt-get install -y sqlite3 2>/dev/null || yum install -y sqlite3 2>/dev/null
-            fi
-            
-            # 使用 SQLite 的 replace 函数安全更新全局配置表和底层入站流设置
-            sqlite3 /etc/x-ui/x-ui.db "UPDATE settings SET value = replace(value, '$OLD_HOST', '$NEW_HOST') WHERE value LIKE '%$OLD_HOST%';"
-            sqlite3 /etc/x-ui/x-ui.db "UPDATE inbounds SET stream_settings = replace(stream_settings, '$OLD_HOST', '$NEW_HOST');"
-            sqlite3 /etc/x-ui/x-ui.db "UPDATE inbounds SET settings = replace(settings, '$OLD_HOST', '$NEW_HOST');"
-            
-            # 同步更新 config.json 中的对应字符
-            if [ -f "/usr/local/x-ui/bin/config.json" ]; then
-                sed -i "s/$OLD_HOST/$NEW_HOST/g" /usr/local/x-ui/bin/config.json
-            fi
-
-            sleep 2
-            echo ""
-            echo -e "${green}---->>> 数据库 “IP/域名” 批量替换完成：${OLD_HOST} ➔ ${NEW_HOST}${plain}"
-        fi
-    else
-        sleep 1
-        echo ""
-        echo -e "${yellow}------>>>> 已跳过数据库 “IP/域名”自动替换。${plain}"
-    fi
-
-    sleep 1
-    # 清理临时文件
-    rm -f /tmp/xpanel_migration_pkg.zip
-    rm -rf /tmp/xpanel_extracted
-    sshpass -p "$OLD_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$OLD_PORT" root@"$OLD_IP" "rm -f /tmp/xpanel_migration_pkg.zip"
-
-    sleep 2
-    echo ""
-    echo ""
-    echo -e "\n${green}==================================================${PLAIN}"
-    echo -e "${green}恭喜！X-Panel-Pro “数据库与配置”一键迁移成功！${plain}"
-    echo ""
-    echo -e "${green}--------->>>>>>>当前面板运行的新 IP: ${NEW_IP}${plain}"
-    echo -e "${green}==================================================${PLAIN}"
-
-    # 强制重启
-    restart 0
-}
-
-# =========================================================
-# 【新功能 【第32项】】 Cloudflare Argo 隧道 (防失联管理)
-# =========================================================
-
-install_cloudflared() {
-    if command -v cloudflared &>/dev/null; then
-        LOGI "cloudflared 已经安装。"
-        return 0
-    fi
-    sleep 1
-    
-    LOGI "正在检测系统架构并安装 cloudflared......."
-    echo ""
-    local arch=$(uname -m)
-    local dl_url=""
-    
-    if [ "$arch" = "x86_64" ] || [ "$arch" = "amd64" ]; then
-        dl_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
-    elif [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then
-        dl_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
-    else
-        LOGE "不支持的系统架构: $arch"
-        return 1
-    fi
-    
-    curl -L --output /usr/local/bin/cloudflared "$dl_url"
-    chmod +x /usr/local/bin/cloudflared
-    sleep 2
-    echo ""
-    
-    if command -v cloudflared &>/dev/null; then
-        LOGI "cloudflared 安装成功！"
-        return 0
-    else
-        LOGE "cloudflared 安装失败，请检查网络连接。"
-        return 1
-    fi
-}
-
-argo_tunnel_menu() {
-    echo -e "
-————————————————————————————————————————————————
-  ${yellow}Cloudflare Argo 隧道 (防失联管理)${plain}
-————————————————————————————————————————————————
-  ${green}1.${plain} 配置并启动固定 Argo 隧道 (Token 模式 - 防失联推荐)
-  ${green}2.${plain} 生成临时应急隧道 (Quick Tunnel - 临时测试用)
-  ${green}3.${plain} 查看 Argo 隧道运行状态
-  ${green}4.${plain} 卸载/停止 Argo 隧道服务
-————————————————————————————————————————————————
-  ${green}0.${plain} 返回主菜单
-"
-    read -p "请输入选项 [0-4]: " choice
-    case "${choice}" in
-    0)
-        show_menu
-        ;;
-    1)
-        setup_permanent_argo
-        ;;
-    2)
-        start_quick_argo
-        ;;
-    3)
-        check_argo_status
-        ;;
-    4)
-        uninstall_argo
-        ;;
-    *)
-        LOGE "无效选项，请输入数字 [0-4]"
-        argo_tunnel_menu
-        ;;
-    esac
-}
-
-setup_permanent_argo() {
-    echo ""
-    echo -e "${yellow}=== 配置固定 Argo 隧道 (防失联核心) ===${plain}"
-    echo ""
-    echo -e "使用说明："
-    echo -e "1. 登录 Cloudflare Zero Trust 后台 (one.dash.cloudflare.com)，"
-    echo -e "2. 进入 Networks（联网） -> Tunnels -> 创建一个新 Tunnel，"
-    echo -e "3. 复制生成的 ${green}Tunnel Token${plain} (一段很长的字符串)，"
-    echo -e "4. Token 获取 ${green}以“ey”开头${plain} (在 CF 后台是****隐藏起来的)，"
-    echo -e "5. 在下方粘贴完整的 Token，即可将本服务器与 Cloudflare 边缘网络映射绑定。\n"
-    echo ""
-
-    read -rp "请在此粘贴您的 Cloudflare Tunnel Token: " CF_TOKEN
-    [[ -z "$CF_TOKEN" ]] && LOGE "Token 不能为空！" && before_show_menu && return 1
-
-    # 确保安装了 cloudflared
-    install_cloudflared || return 1
-    echo ""
-    sleep 2
-
-    echo -e "${yellow}正在将 cloudflared 注册为系统服务并启动......${plain}"
-    echo ""
-    
-    # 如果之前有旧服务，先卸载清理
-    cloudflared service uninstall >/dev/null 2>&1
-
-    # 安装为系统服务
-    cloudflared service install "$CF_TOKEN"
-    echo ""
-    
-    sleep 2
-    if [ $? -eq 0 ]; then
-        echo -e "\n${green}✅ Argo 隧道安装并启动成功！${plain}"
-        echo ""
-        echo -e "${green}提示：您现在可以在 Cloudflare Zero Trust 后台为该隧道绑定一个自定义域名（例如 panel.yourdomain.com），${plain}"
-        echo ""
-        echo -e "${green}并配置 Public Hostname（路由） 指向本地面板端口（例如 https://localhost:15208）。${plain}"
-        echo ""
-        echo -e "${yellow}================================================================${plain}"
-        echo -e "${green}👉 下一步：请前往 Cloudflare Zero Trust 后台完成域名绑定：${plain}"
-        echo -e "1. 登录 ${yellow}one.dash.cloudflare.com${plain} -> Networks（联网） -> Tunnels"
-        echo -e "2. 找到该隧道，点击 ${yellow}Configure（添加路由）${plain} -> ${yellow}已发布的应用程序${plain} -> 添加域名"
-        echo -e "3. ${red}关键配置（核心防坑项）：${plain}"
-        echo -e "   - 协议头选择: ${yellow}必须以“https”开头，必须保留：“localhost”字符串${plain}"
-        echo -e "   - Service URL 填入:  ${yellow}https://localhost:面板端口${plain} (例如 https://localhost:15208)"
-        echo -e "   - ${yellow}点击展开下方的 Additional application settings（其他应用程序设置）${plain}"
-        echo -e "   - ${green}在“TLS”选项处必须“勾选/打开”--->禁用 TLS 证书验证${plain} (允许跳过自签证书校验)"
-        echo -e "${yellow}================================================================${plain}"
-        echo ""
-        echo -e "${green}这样即使“服务器 IP 被封”，通过该域名依然能完美“访问后台面板”！${plain}"
-        echo ""
-        echo -e "${red}注意：在 CF 隧道后台绑定的“子域名”，不能去添加 A记录 解析到 VPS，CF自动解析！${plain}"
-    else
-        LOGE "Argo 隧道服务安装失败，请检查 Token 是否正确。"
-    fi
-
-    before_show_menu
-}
-
-start_quick_argo() {
-    echo ""
-    echo -e "${yellow}=== 生成临时应急隧道 (Quick Tunnel) ===${plain}"
-    echo -e "提示：该功能会临时生成一个 *.trycloudflare.com 的随机外链，用于临时测试访问面板。"
-    echo ""
-    
-    install_cloudflared || return 1
-    
-    local existing_port=$(/usr/local/x-ui/x-ui setting -show true 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | grep -i 'port' | grep -Eo '[0-9]+' | tail -n 1)
-    existing_port=${existing_port:-15208}
-
-    # 【新增功能】：智能提取面板安全路径（Web Root / Base Path），并自动规范化格式
-    local panel_path=$(/usr/local/x-ui/x-ui setting -show true 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | grep -iE 'path|base' | awk '{print $NF}' | tr -d '"' | tr -d "'")
-    if [ -z "$panel_path" ] || [ "$panel_path" = "-" ]; then
-        panel_path="/"
-    else
-        [[ "$panel_path" != /* ]] && panel_path="/$panel_path"
-        [[ "$panel_path" != */ ]] && panel_path="${panel_path}/"
-    fi
-
-    sleep 2
-
-    echo ""
-    echo -e "${green}正在为面板端口 (${existing_port}) 创建临时隧道，当前安全路径: [${panel_path}]，请稍候......${plain}"
-    echo ""
-    echo -e "${yellow}注意：下方将实时输出隧道地址，系统已为您自动拼接好带路径的完整直达链接。${yellow}"
-    echo ""
-    echo -e "${red}按 “Ctrl + C” 或“关闭 SSH终端”可以【销毁退出】临时隧道，不会留下任何联网痕迹。${plain}\n"
-
-    # 【核心升级】：实时捕获 cloudflared 输出，一旦生成随机域名，立即自动拼接并高亮打印完整带路径链接
-    cloudflared tunnel --no-tls-verify --url https://127.0.0.1:"${existing_port}" 2>&1 | while IFS= read -r line; do
-        echo "$line"
-        if echo "$line" | grep -q "trycloudflare.com"; then
-            local raw_url=$(echo "$line" | grep -Eo 'https://[a-zA-Z0-9.-]+\.trycloudflare\.com')
-            if [ -n "$raw_url" ]; then
-                local full_url="${raw_url}${panel_path}"
-                echo -e "\n${green}================================================================${plain}"
-                echo -e "${green}🔥 【一键直达面板完整链接 (复制到浏览器打开)】: ${yellow}${full_url}${plain}"
-                echo -e "${green}================================================================${plain}\n"
-            fi
-        fi
-    done
-    
-    before_show_menu
-}
-
-check_argo_status() {
-    echo ""
-    echo -e "${yellow}=== Argo 隧道运行状态 ===${plain}"
-    if systemctl is-active --quiet cloudflared; then
-        echo -e "服务状态: ${green}运行中 (Running)${plain}"
-        echo ""
-        systemctl status cloudflared --no-pager -l
-    else
-        echo -e "服务状态: ${red}未运行或未安装${plain}"
-    fi
-    before_show_menu
-}
-
-uninstall_argo() {
-    confirm "您确定要卸载并停止 Argo 隧道服务吗？" "n"
-    if [[ $? -eq 0 ]]; then
-        systemctl stop cloudflared >/dev/null 2>&1
-        cloudflared service uninstall >/dev/null 2>&1
-        rm -f /usr/local/bin/cloudflared
-        echo ""
-        sleep 2
-        echo -e "${green}Argo 隧道已成功卸载。${plain}"
-    fi
-    before_show_menu
-}
-
-# 30. 子菜单入口
-backup_restore_menu() {
-    echo -e "————————————————————————————————————————————————"
-    echo -e "${yellow} 远程备份与急救还原 ${plain}"
-    echo -e "————————————————————————————————————————————————"
-    echo -e "说明：当面板无法访问时，使用此功能与云端同步数据"
-    echo -e "————————————————————————————————————————————————"
-    echo -e "${green}  1.${plain} 远程备份 (备份当前配置 -> 云端)"
-    echo -e "${green}  2.${plain} 急救还原 (云端拉取 -> 覆盖本机)"
-    echo -e "————————————————————————————————————————————————"
-    echo -e "${green}  0.${plain} 返回主菜单"
-    echo -e ""
-    read -p "请输入选项 [0-2]: " choice
-    case "$choice" in
-        1) remote_backup ;;
-        2) rescue_restore ;;
-        0) show_menu ;;
-        *) echo -e "${red}无效选项${plain}"; backup_restore_menu ;;
-    esac
-}
-
-# =========================================================
-# 【新增功能 【第33选项】】 创建 IPv6 链接（应急防封）
-# =========================================================
-get_random_port() {
-    local port
-    while true; do
-        port=$((RANDOM % 45536 + 20000))
-        if ! ss -tuln 2>/dev/null | grep -q ":$port " && ! netstat -tuln 2>/dev/null | grep -q ":$port "; then
-            echo "$port"
-            break
-        fi
-    done
-}
-
-create_ipv6_links() {
-    echo ""
-    echo -e "${yellow}=== 创建 IPv6 链接（应急防封） ===${plain}"
-    echo ""
-
-    # 1. 自动检测并获取 VPS 的 IPv6 地址
-    local v6=$(ip -6 addr show scope global 2>/dev/null | grep inet6 | awk '{print $2}' | cut -d'/' -f1 | head -n 1)
-    if [[ -z "$v6" ]]; then
-        v6=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep ':' | grep -v '^fe80' | head -n 1)
-    fi
-    if [[ -z "$v6" ]]; then
-        v6=$(curl -s6m8 http://ip.sb -k)
-    fi
-    if [[ -z "$v6" ]]; then
-        v6=$(curl -s6m8 https://api.ip.sb/ip -k)
-    fi
-    if [[ -z "$v6" ]]; then
-        v6=$(curl -s6m8 https://ipv6.icanhazip.com -k)
-    fi
-
-    if [[ -z "$v6" ]]; then
-        LOGE "提示：此台 VPS 不支持创建 IPv6 链接（未检测到有效的 IPv6 地址）！"
-        before_show_menu
-        return 1
-    fi
-
-    LOGI "检测到服务器 IPv6 地址: [${v6}]"
-    echo ""
-
-    # 2. 子菜单让用户选择想要创建哪种类型的 Vless 链接
-    echo -e "${green}请选择想要创建的 IPv6 代理链接类型：${plain}"
-    echo -e "${green}1.${plain} 创建 Vless + TCP + Reality + Vision 链接"
-    echo -e "${green}2.${plain} 创建 VLESS + XHTTP + Reality 链接"
-    echo -e "${green}3.${plain} 同时创建“上述两种类型的链接”"
-    echo -e "${green}0.${plain} 返回主菜单"
-    echo ""
-    read -rp "请输入选项 [0-3]: " v6_choice
-
-    case "$v6_choice" in
-        0)
-            show_menu
-            ;;
-        1|2|3)
-            # 确保安装了 sqlite3 工具以便将入站数据写入面板数据库
-            if ! command -v sqlite3 &> /dev/null; then
-                apt-get update >/dev/null 2>&1 && apt-get install -y sqlite3 >/dev/null 2>&1 || yum install -y sqlite3 >/dev/null 2>&1
-            fi
-
-            # 随机生成 UUID、20000以上未被占用的高位端口、随机 SNI 域名、默认 Short ID
-            local uuid=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen 2>/dev/null || cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 32 | head -n 1 | sed -r 's/(.{8})(.{4})(.{4})(.{4})(.{12})/\1-\2-\3-\4-\5/')
-            local port_vision=$(get_random_port)
-            local port_xhttp=$(get_random_port)
-            
-            local domains=("sega.com" "tesla.com" "lovelive-anime.jp" "csuglobal.edu" "usc.edu")
-            local sni=${domains[$RANDOM % ${#domains[@]}]}
-            local sid="40"
-            
-            # 随机生成 XHTTP 的路径后缀（例如 8 位随机字符）
-            local xhttp_rand_path=$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | fold -w 8 | head -n 1)
-            
-            # 自动获取 Reality 密钥对 (私钥 priv 与 公钥 pbk)
-            local xray_bin=$(find /usr/local/x-ui/bin/ -name "xray-linux-*" -type f | head -n 1)
-            local priv=""
-            local pbk=""
-            if [ -x "$xray_bin" ]; then
-                local x25519_out=$($xray_bin x25519 2>/dev/null)
-                priv=$(echo "$x25519_out" | grep "PrivateKey" | awk '{print $2}')
-                pbk=$(echo "$x25519_out" | grep "Password" | awk '{print $3}')
-            fi
-            if [ -z "$priv" ] || [ -z "$pbk" ]; then
-                priv="gCkQ7TFpQVcESWkECewFAmYhjBFhzu3BgAGUp6Z0n1M"
-                pbk="9jGTCeCm04ntbJ6BucbfAT2-Y0qU4jFL5lrvgjkLrhY"
-            fi
-
-            local sniffing_json='{"enabled":true,"destOverride":["http","tls","quic","fakedns"],"metadataOnly":false,"routeOnly":false}'
-
-            sleep 2
-            echo ""
-            echo -e "${yellow}================================================================${plain}"
-            echo -e "${green}“IPv6 防封代理链接”------->>>> 已经【成功生成】！${plain}"
-            echo -e "${yellow}================================================================${plain}"
-            echo ""
-
-            sleep 2
-            # 创建类型 1: Vless + TCP + Reality + Vision
-            if [[ "$v6_choice" == "1" || "$v6_choice" == "3" ]]; then
-                local p_v="$port_vision"
-                local remark_v="IPv6-Vision-$p_v"
-                local tag_v="v6-vision-$p_v"
-                local settings_v="{\"clients\":[{\"id\":\"$uuid\",\"flow\":\"xtls-rprx-vision\",\"email\":\"$remark_v\",\"level\":0,\"enable\":true}],\"decryption\":\"none\",\"fallbacks\":[]}"
-                local stream_v="{\"network\":\"tcp\",\"security\":\"reality\",\"realitySettings\":{\"show\":false,\"target\":\"${sni}:443\",\"xver\":0,\"serverNames\":[\"$sni\",\"www.$sni\"],\"settings\":{\"publicKey\":\"$pbk\",\"spiderX\":\"/\",\"mldsa65Verify\":\"\"},\"privateKey\":\"$priv\",\"maxClientVer\":\"\",\"minClientVer\":\"\",\"maxTimediff\":0,\"mldsa65Seed\":\"\",\"shortIds\":[\"$sid\"]},\"tcpSettings\":{\"acceptProxyProtocol\":false,\"header\":{\"type\":\"none\"}}}"
-                
-                # 写入面板数据库，打通后台入站数据
-                if [ -f "/etc/x-ui/x-ui.db" ]; then
-                    sqlite3 /etc/x-ui/x-ui.db "INSERT INTO inbounds (user_id, up, down, total, remark, enable, expiry_time, listen, port, protocol, settings, stream_settings, tag, sniffing) VALUES (1, 0, 0, 0, '$remark_v', 1, 0, '::', $p_v, 'vless', '$settings_v', '$stream_v', '$tag_v', '$sniffing_json');"
-                fi
-
-                local link_vision="vless://${uuid}@[${v6}]:${p_v}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${sni}&fp=chrome&pbk=${pbk}&sid=${sid}&spx=%2F&type=tcp&headerType=none#Reality-TCP-Vision-IPv6"
-                echo -e "${green}【类型 1】 Vless + TCP + Reality + Vision (分配端口: ${p_v})：${plain}"
-                echo ""
-                echo -e "\033[1;35m${link_vision}${plain}"
-                echo ""
-            fi
-
-            # 创建类型 2: VLESS + XHTTP + Reality (已完整包含 path 和 mode=stream-up 参数)
-            if [[ "$v6_choice" == "2" || "$v6_choice" == "3" ]]; then
-                local p_x=$([[ "$v6_choice" == "3" ]] && echo "$port_xhttp" || echo "$port_vision")
-                local remark_x="IPv6-XHTTP-$p_x"
-                local tag_x="v6-xhttp-$p_x"
-                local settings_x="{\"clients\":[{\"id\":\"$uuid\",\"flow\":\"\",\"email\":\"$remark_x\",\"level\":0,\"enable\":true}],\"decryption\":\"none\",\"fallbacks\":[]}"
-                local stream_x="{\"network\":\"xhttp\",\"security\":\"reality\",\"realitySettings\":{\"show\":false,\"target\":\"${sni}:443\",\"xver\":0,\"serverNames\":[\"$sni\",\"www.$sni\"],\"settings\":{\"publicKey\":\"$pbk\",\"spiderX\":\"/\",\"mldsa65Verify\":\"\"},\"privateKey\":\"$priv\",\"maxClientVer\":\"\",\"minClientVer\":\"\",\"maxTimediff\":0,\"mldsa65Seed\":\"\",\"shortIds\":[\"$sid\"]},\"xhttpSettings\":{\"headers\":{},\"host\":\"\",\"mode\":\"stream-up\",\"noSSEHeader\":false,\"path\":\"/${xhttp_rand_path}\",\"scMaxBufferedPosts\":30,\"scMaxEachPostBytes\":\"1000000\",\"scStreamUpServerSecs\":\"20-80\",\"xPaddingBytes\":\"100-1000\"}}"
-                
-                # 写入面板数据库，打通后台入站数据
-                if [ -f "/etc/x-ui/x-ui.db" ]; then
-                    sqlite3 /etc/x-ui/x-ui.db "INSERT INTO inbounds (user_id, up, down, total, remark, enable, expiry_time, listen, port, protocol, settings, stream_settings, tag, sniffing) VALUES (1, 0, 0, 0, '$remark_x', 1, 0, '::', $p_x, 'vless', '$settings_x', '$stream_x', '$tag_x', '$sniffing_json');"
-                fi
-
-                local link_xhttp="vless://${uuid}@[${v6}]:${p_x}?encryption=none&security=reality&sni=${sni}&fp=chrome&pbk=${pbk}&sid=${sid}&spx=%2F&type=xhttp&path=%2F${xhttp_rand_path}&mode=stream-up#Reality-XHTTP-IPv6"
-                echo -e "${green}【类型 2】 VLESS + XHTTP + Reality (分配端口: ${p_x})：${plain}"
-                echo ""
-                echo -e "\033[1;35m${link_xhttp}${plain}"
-                echo ""
-            fi
-
-            sleep 1
-            # 自动重启面板服务，使数据库中的新入站配置在 Xray 核心中正式生效监听
-            LOGI "正在自动重启面板以生效新创建的 IPv6 入站配置......"
-            systemctl restart x-ui >/dev/null 2>&1
-            echo ""
-
-            sleep 1
-            # 3. 自动调用 UFW 防火墙工具放行对应端口
-            if command -v ufw &> /dev/null; then
-                if [[ "$v6_choice" == "1" || "$v6_choice" == "3" ]]; then
-                    ufw allow ${port_vision} >/dev/null 2>&1
-                    LOGI "已自动通过 UFW 防火墙放行端口: ${port_vision}"
-                    echo ""
-                fi
-                if [[ "$v6_choice" == "2" || "$v6_choice" == "3" ]]; then
-                    local p_allow_x=$([[ "$v6_choice" == "3" ]] && echo "$port_xhttp" || echo "$port_vision")
-                    ufw allow ${p_allow_x} >/dev/null 2>&1
-                    LOGI "已自动通过 UFW 防火墙放行端口: ${p_allow_x}"
-                fi
-            fi
-            echo ""
-
-            sleep 1
-            # 4. 给出使用提示
-            echo -e "${yellow}================================================================${plain}"
-            echo -e "${green}------->>> 使用方法/说明提示：${plain}"
-            echo -e "请复制上面“带 IPv6 的链接地址”，直接导入 “v2rayN” 等软件中即可使用。"
-            echo -e "${yellow}================================================================${plain}"
-            echo ""
-
-            if [[ $# -eq 0 ]]; then
-                before_show_menu
-            fi
-            ;;
-        *)
-            LOGE "无效选项，请重新输入！"
-            create_ipv6_links
-            ;;
-    esac
-}
-
 show_usage() {
     echo -e "         ---------------------"
     echo -e "         |${green}X-Panel 控制菜单用法 ${plain}|${plain}"
@@ -3699,25 +2128,16 @@ show_menu() {
   ${green}19.${plain} CF SSL 证书
   ${green}20.${plain} IP 限制管理
   ${green}21.${plain} 防火墙管理
-  ${green}22.${plain} 启用 BBR 
 ——————————————————————
+  ${green}22.${plain} 启用 BBR 
   ${green}23.${plain} 更新 Geo 文件
   ${green}24.${plain} Speedtest by Ookla
-  ${green}25.${plain} 安装订阅转换
-  ${green}26.${plain} 网页版SSH工具
-  ${green}27.${plain} 线路和IP检测
-  ${green}28.${plain} 服务器DNS检测
-——————————————————————
-  ${green}29.${plain} 系统调优(TCP/BBR)
-  ${green}30.${plain} 远程备份/急救还原
-  ${green}31.${plain} 面板数据库一键迁移
-  ${green}32.${plain} Cloudflare Argo 隧道(防失联)
-  ${green}33.${plain} 自动创建 IPv6 链接（应急防封）
+  ${green}25.${plain} 安装订阅转换 
 ——————————————————————
   ${green}若在使用过程中有任何问题${plain}
-  ${yellow}请加入〔X-Panel-Pro 面板〕专属VIP群${plain}
-  ${red}https://t.me/X_Panels ${yellow}截图进行反馈${plain}
-  ${green}〔X-Panel 面板〕项目地址${plain}
+  ${yellow}请加入〔X-Panel面板〕交流群${plain}
+  ${red}https://t.me/XUI_CN ${yellow}截图进行反馈${plain}
+  ${green}〔X-Panel面板〕项目地址${plain}
   ${yellow}https://github.com/xeefei/x-panel${plain}
   ${green}详细〔安装配置〕教程${plain}
   ${yellow}https://xeefei.blogspot.com/2025/09/x-panel.html${plain}
@@ -3746,7 +2166,7 @@ ${green}9、RackNerd极致性价比机器：${yellow}https://my.racknerd.com/aff
 ----------------------------------------------
 "
     show_status
-    echo && read -p "请输入数字选项 [0-33]: " num
+    echo && read -p "请输入选项 [0-25]: " num
 
     case "${num}" in
     0)
@@ -3827,32 +2247,8 @@ ${green}9、RackNerd极致性价比机器：${yellow}https://my.racknerd.com/aff
     25)
         subconverter
         ;;
-    26)
-        check_install && install_sshwifty
-        ;;
-    27)
-        check_install && check_place_menu
-        ;;
-    28)
-        check_install && dns_check
-        ;;
-    29)
-        check_install && system_tuning_menu
-        ;;
-    30)
-        check_install && backup_restore_menu
-        ;;
-    31)
-        check_install && migrate_database
-        ;;
-    32)
-        check_install && argo_tunnel_menu
-        ;;
-    33)
-        check_install && create_ipv6_links
-        ;;
     *)
-        LOGE "请输入正确的数字选项 [0-33]"
+        LOGE "请输入正确的数字选项 [0-25]"
         ;;
     esac
 }
@@ -3900,31 +2296,7 @@ if [[ $# > 0 ]]; then
         ;;
     "subconverter")
         check_install 0 && subconverter 0
-        ;;
-    "sshwifty")
-        check_install 0 && install_sshwifty 0 
-        ;;
-    "dnscheck")
-        check_install 0 && dns_check 0
-        ;;
-    "tune")
-        check_install 0 && system_tuning_menu 0
-        ;;
-    "backup")
-        check_install 0 && remote_backup 0
-        ;;
-    "restore")
-        check_install 0 && rescue_restore 0
-        ;;
-    "migrate")
-        check_install 0 && migrate_database 0
-        ;;
-    "argo")
-        check_install 0 && argo_tunnel_menu 0
-        ;;
-    "ipv6")
-        check_install 0 && create_ipv6_links 0
-        ;;
+        ;;    
     *) show_usage ;;
     esac
 else
