@@ -29,20 +29,14 @@ class HttpUtil {
         return typeof data === 'object' ? data : new Msg(false, 'unknown data:', data);
     }
 
+    // Posts data as a form and returns the server's JSON as is. It goes
+    // through axios so that axios.defaults.baseURL (the panel's webBasePath)
+    // and the X-Requested-With header apply, like every other HttpUtil call;
+    // a bare fetch() sent '/panel/...' to the host root and got a 404.
     static async postForm(url, data) {
-    const formData = new URLSearchParams();
-    for (const key in data) {
-        formData.append(key, data[key]);
+        const resp = await axios.post(url, data);
+        return resp.data;
     }
-    const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: formData.toString()
-    });
-    return res.json();
-}
 
 
     static async get(url, params, options = {}) {
