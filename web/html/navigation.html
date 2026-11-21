@@ -2,8 +2,8 @@
 <style>
   /*
     样式优化：强制选项卡铺满主区域并等宽显示
-    - display: flex; 使其成为弹性容器
-    - flex-grow: 1; 让每个选项卡平均分配可用空间
+- display: flex; 使其成为弹性容器
+- flex-grow: 1; 让每个选项卡平均分配可用空间
   */
   .ant-tabs-bar {
     margin: 0;
@@ -15,20 +15,27 @@
   .ant-tabs-nav-wrap {
     display: flex !important;
     flex: 1 !important;
+    overflow: hidden;
   }
 
   /* 优化选项卡导航的flexbox布局，确保等宽显示 */
   .ant-tabs-nav {
     width: 100%;
     display: flex !important;
+    align-items: center;
   }
   
   /* 为选项卡内部添加内边距和文字大小调整 */
   .ant-tabs-tab {
     flex: 1 !important; /* 新增规则：强制选项卡等宽显示 */
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    padding: 0 16px;
-    font-size: 18px; /* 增大选项卡文字大小 */
+    padding: 12px 16px !important;
+    margin-right: 0 !important;
+    font-size: 15px; /* 适中字号，避免选项卡拥挤错位 */
+    line-height: 1.5;
   }
   
   /* 为选项卡图标和文字之间添加间距 */
@@ -42,7 +49,9 @@
   */
   #content-layout .ant-layout-content {
     max-width: 1200px;
-    padding-top: 0 !important; /* 强制移除顶部的间距 */
+    width: 100%;
+    margin: 0 auto;
+    padding-top: 16px !important;
     padding-left: 16px;
     padding-right: 16px;
     box-sizing: border-box;
@@ -53,11 +62,12 @@
     使用 margin-top 和 padding 调整卡片的位置和内部空间。
   */
   .tab-content-pane {
-    padding-top: 24px;
+    padding-top: 16px;
   }
 
   .tab-content-pane .ant-card {
     padding: 24px;
+    border-radius: 8px;
   }
   
   /*
@@ -74,9 +84,17 @@
     color: inherit !important; /* 强制继承父元素的颜色 */
   }
 
+  .tab-content-pane h2 {
+    margin-top: 8px;
+    margin-bottom: 12px;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
   /* 确保链接文字在任何主题下都显示为蓝色，以保持一致的视觉识别 */
   .tab-content-pane a {
     color: #1890ff !important;
+    word-break: break-all;
   }
   .tab-content-pane a:hover {
     text-decoration: underline;
@@ -84,9 +102,9 @@
   
   /* 调整 p 标签字体大小，使其更易于阅读。*/
   #content-layout .tab-content-pane p {
-    line-height: 1.8;
-    font-size: 18px !important;
-    margin-bottom: 1.5em; /* 为段落添加底部外边距 */
+    line-height: 1.75;
+    font-size: 15px !important;
+    margin-bottom: 1em; /* 为段落添加底部外边距 */
   }
   
   /* 修复列表文字大小和行高问题 */
@@ -96,8 +114,14 @@
   }
   .tab-content-pane ol li, .tab-content-pane ul li {
     margin-bottom: 0.5em;
-    line-height: 1.8;
+    line-height: 1.75;
     font-size: 15px; /* 调整列表项字体大小 */
+  }
+
+  .tab-content-pane code {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(128, 128, 128, 0.15);
   }
 </style>
 {{ template "page/head_end" .}}
@@ -132,7 +156,7 @@
                 <li>打开谷歌浏览器，登录开了位置记录功能的谷歌账号，并安装 <a href="https://chrome.google.com/webstore/detail/location-guard/cfohepagpmnodfdmjliccbbigdkfcgia" target="_blank">Location Guard</a> 扩展插件；</li>
                 <li>打开Location Guard插件，选择Fixed Location，并在给出的地图上单击，即可标记上你想要IP所处的国家/地区 Google IP定位错误，使用Location Guard修改；</li>
                 <li>转换到Options选项，Default level默认设置为Use fixed location；</li>
-                <li>访问 <a href="打开谷歌地图google.com/maps，点击右下角定位授权图标，使google" target="_blank">谷歌地图服务</a> 获取当前GPS位置，确认是否已修改成功；</li>
+                <li>访问 <a href="https://www.google.com/maps" target="_blank">谷歌地图服务</a>（打开谷歌地图google.com/maps，点击右下角定位授权图标，使google）获取当前GPS位置，确认是否已修改成功；</li>
                 <li>谷歌搜索my ip，即可看到谷歌IP定位到了刚才地图上标记的位置；</li>
                 <li>最后，通过 <a href="https://support.google.com/websearch/workflow/9308722" target="_blank">此网页向谷歌报告IP问题</a>。</li>
                 </ol>
@@ -140,7 +164,7 @@
 
                 <h2>三、在VPS服务器部署“订阅转换”功能</h2>
                 <ol>
-                <li><strong>操作步骤：：</strong> </li>
+                <li><strong>操作步骤：</strong> </li>
                 <li>进入脚本输入x-ui命令调取面板，选择第【25】选项安装订阅转换模块；</li>
                 <li>等待安装【订阅转换】成功之后，访问地址：<code>https://你的域名:15268</code> ；</li>
                 <li>因为在转换过程中需要调取后端API，所以请确保端口 8000 和 15268 是打开放行的；</li>
@@ -153,12 +177,12 @@
 
                 <h2>四、如何保护自己的IP不被封锁被墙掉？</h2>
                 <ol>
-                <li><strong>使用安全代理协议：：</strong> 加密是必备，推荐使用vless+reality+vision协议组合；</li>
-                <li><strong>避免共享节点：：</strong> 尽量不要在不同的地区，多个省份之间不要共同连接同一个IP；</li>
-                <li><strong>隔离IP和端口：：</strong> 避免多个用户或设备在不同地理位置漫游时使用同一个IP和端口，要分开；</li>
-                <li><strong>控制流量：：</strong> 不要在单台VPS上长时间进行大流量下载，在一天内不要流量过高，适时切换节点；</li>
-                <li><strong>使用高位端口：：</strong> 创建入站时，尽量使用 40000 至 65000 之间的高位端口号。</li>
-                <li><strong>核心总结：：</strong> 不要多终端、多省份、多朋友共同使用同一个IP和端口。多创建几个入站，各用各的，避免被 GFW 识别为机场特征。
+                <li><strong>使用安全代理协议：</strong> 加密是必备，推荐使用vless+reality+vision协议组合；</li>
+                <li><strong>避免共享节点：</strong> 尽量不要在不同的地区，多个省份之间不要共同连接同一个IP；</li>
+                <li><strong>隔离IP和端口：</strong> 避免多个用户或设备在不同地理位置漫游时使用同一个IP和端口，要分开；</li>
+                <li><strong>控制流量：</strong> 不要在单台VPS上长时间进行大流量下载，在一天内不要流量过高，适时切换节点；</li>
+                <li><strong>使用高位端口：</strong> 创建入站时，尽量使用 40000 至 65000 之间的高位端口号。</li>
+                <li><strong>核心总结：</strong> 不要多终端、多省份、多朋友共同使用同一个IP和端口。多创建几个入站，各用各的，避免被 GFW 识别为机场特征。
                 使用〔X-Panel面板〕多创建几个【入站】， 多做几条备用，各用各的！各行其道才比较安全！
                 GFW的思维模式是干掉机场，机场的特征个人用户不要去沾染，自然IP就保护好了。</li>
                 </ol>
@@ -377,19 +401,19 @@
                 <br>
                 <ol>
                 <li><strong>NodeSeek 论坛：</strong> <a href="https://www.nodeseek.com/" target="_blank">https://www.nodeseek.com/</a></li>
-                <li><strong>V2EX 论坛：：</strong> <a href="https://www.v2ex.com/" target="_blank">https://www.v2ex.com/</a></li>
-                <li><strong>搬瓦工 TG 群：：</strong> <a href="https://t.me/BWHOfficial" target="_blank">https://t.me/BWHOfficial</a></li>
-                <li><strong>Xray 官方群：：</strong> <a href="https://t.me/projectXray" target="_blank">https://t.me/projectXray</a></li>
-                <li><strong>Dmit 交流群：：</strong> <a href="https://t.me/DmitChat" target="_blank">https://t.me/DmitChat</a></li>
-                <li><strong>白丝云用户群：：</strong> <a href="https://t.me/+VHZLKELTQyzPNgOV" target="_blank">https://t.me/+VHZLKELTQyzPNgOV</a></li>
-                <li><strong>NameSilo 域名注册：：</strong> <a href="https://www.namesilo.com/" target="_blank">https://www.namesilo.com/</a></li>
+                <li><strong>V2EX 论坛：</strong> <a href="https://www.v2ex.com/" target="_blank">https://www.v2ex.com/</a></li>
+                <li><strong>搬瓦工 TG 群：</strong> <a href="https://t.me/BWHOfficial" target="_blank">https://t.me/BWHOfficial</a></li>
+                <li><strong>Xray 官方群：</strong> <a href="https://t.me/projectXray" target="_blank">https://t.me/projectXray</a></li>
+                <li><strong>Dmit 交流群：</strong> <a href="https://t.me/DmitChat" target="_blank">https://t.me/DmitChat</a></li>
+                <li><strong>白丝云用户群：</strong> <a href="https://t.me/+VHZLKELTQyzPNgOV" target="_blank">https://t.me/+VHZLKELTQyzPNgOV</a></li>
+                <li><strong>NameSilo 域名注册：</strong> <a href="https://www.namesilo.com/" target="_blank">https://www.namesilo.com/</a></li>
                 </ol>
                 <br>
 
                 <br>
                 <h2>四、其他内容</h2>
                 <br>
-                <p><a href="https://www.youtube.com/results?search_query=4k%E6%B5%8B%E9%80%9F" target="_blank">油管4K测速：https://www.youtube.com/results?search_query=4k%E6%B5%8B%E9%90%A6</a></p>
+                <p><a href="https://www.youtube.com/results?search_query=4k%E6%B5%8B%E9%80%9F" target="_blank">油管4K测速：https://www.youtube.com/results?search_query=4k%E6%B5%8B%E9%80%9F</a></p>
                 <p><a href="https://xtls.github.io/" target="_blank">Project X：https://xtls.github.io/</a></p>
                 <p><a href="https://whatismyipaddress.com/" target="_blank">我的IP查询：https://whatismyipaddress.com/</a></p>
                 <p><a href="https://translate.google.com/?hl=zh-CN" target="_blank">Google翻译：https://translate.google.com/?hl=zh-CN</a></p>
