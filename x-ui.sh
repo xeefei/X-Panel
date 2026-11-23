@@ -820,6 +820,41 @@ install_acme() {
     return 0 
 }
 
+# 【中文注释】：“配置证书自动续签定时任务（每天凌晨 04:38 执行，清理旧的 acme.sh --cron 任务并去重）”函数
+setup_acme_cronjob() {
+    local cron_comment="# 【证书续签：每天的凌晨 04:38 执行】"
+    local cron_cmd='38 4 * * * "/root/.acme.sh"/acme.sh --cron --home "/root/.acme.sh" >/dev/null 2>&1'
+    local existing_cron=""
+
+    if command -v crontab >/dev/null 2>&1; then
+        existing_cron=$(crontab -l 2>/dev/null || true)
+    fi
+
+    # 清理旧的同款注释、旧的 04:38 任务，以及 acme.sh 自动生成的其他 --cron 定时任务，避免出现两条续签任务
+    local filtered_cron=$(printf "%s\n" "$existing_cron" \
+        | grep -vF "$cron_comment" \
+        | grep -vF "$cron_cmd" \
+        | grep -v '/.acme.sh/acme.sh --cron' \
+        | sed '/^[[:space:]]*$/d' || true)
+
+    {
+        if [ -n "$filtered_cron" ]; then
+            printf "%s\n" "$filtered_cron"
+        fi
+        printf "%s\n%s\n" "$cron_comment" "$cron_cmd"
+    } | crontab - >/dev/null 2>&1
+
+    if command -v systemctl >/dev/null 2>&1; then
+        if systemctl list-unit-files 2>/dev/null | grep -q "^cron\.service"; then
+            systemctl enable cron >/dev/null 2>&1
+            systemctl start cron >/dev/null 2>&1
+        elif systemctl list-unit-files 2>/dev/null | grep -q "^crond\.service"; then
+            systemctl enable crond >/dev/null 2>&1
+            systemctl start crond >/dev/null 2>&1
+        fi
+    fi
+}
+
 # 【中文注释】：“备用方式申请证书”函数
 ssl_cert_issue_standalone_embedded() {
     local existing_webBasePath=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'webBasePath（访问路径）: .+' | awk '{print $2}')
@@ -908,6 +943,8 @@ ssl_cert_issue_standalone_embedded() {
         ubuntu|debian)
             sudo apt update -y
             sudo apt install -y curl socat cron
+            systemctl enable cron >/dev/null 2>&1
+            systemctl start cron >/dev/null 2>&1
             ;;
         centos|almalinux|rocky)
             sudo yum update -y
@@ -988,7 +1025,7 @@ ssl_cert_issue_standalone_embedded() {
         LOGI "✅ 证书安装命令执行成功！"
 
 # --- 关键修复：强制在系统中注册并写入 crontab 自动续签定时任务 ---
-        ~/.acme.sh/acme.sh --install-cronjob >/dev/null 2>&1
+        setup_acme_cronjob
 
         # 启用 acme.sh 自动升级
         ~/.acme.sh/acme.sh --upgrade --auto-upgrade
@@ -1011,7 +1048,7 @@ ssl_cert_issue_standalone_embedded() {
             echo ""
             echo "  - 私钥路径：$webKeyFile"
             echo ""
-            echo -e "${green}登录访问面板URL: https://${domain}:${existing_port}${green}${existing_webBasePath}${plain}"
+            echo -e "${green}登录访问面板URL: https://${DOMAIN}:${existing_port}${green}${existing_webBasePath}${plain}"
             echo ""
             echo -e "${green}PS：若您要登录访问面板，请复制上面的地址到浏览器打开即可${plain}"
             echo ""
@@ -1412,7 +1449,7 @@ ssl_cert_issue() {
     fi
 
 # --- 关键修复：强制在系统中注册并写入 crontab 自动续签定时任务 ---
-    ~/.acme.sh/acme.sh --install-cronjob >/dev/null 2>&1
+    setup_acme_cronjob
 
     # 启用自动续订
     echo ""
@@ -1481,6 +1518,31 @@ ssl_cert_issue_CF() {
                 exit 1
             fi
         fi
+
+        # 按不同操作系统安装 cron / cronie 并显式启动服务，保证自动续签
+        case "${release}" in
+        ubuntu | debian | armbian)
+            apt update && apt install cron -y
+            systemctl enable cron >/dev/null 2>&1
+            systemctl start cron >/dev/null 2>&1
+            ;;
+        centos | rhel | almalinux | rocky | ol)
+            yum -y update && yum -y install cronie
+            systemctl start crond && systemctl enable crond
+            ;;
+        fedora | amzn | virtuozzo)
+            dnf -y update && dnf -y install cronie
+            systemctl start crond && systemctl enable crond
+            ;;
+        arch | manjaro | parch)
+            pacman -Sy --noconfirm cron
+            systemctl enable cron >/dev/null 2>&1
+            systemctl start cron >/dev/null 2>&1
+            ;;
+        *)
+            LOGD "未匹配到特定系统的 cron 包管理器，跳过自动安装 cron / cronie。"
+            ;;
+        esac
 
         CF_Domain=""
 
@@ -1561,7 +1623,7 @@ ssl_cert_issue_CF() {
         fi
 
 # --- 关键修复：强制在系统中注册并写入 crontab 自动续签定时任务 ---
-    ~/.acme.sh/acme.sh --install-cronjob >/dev/null 2>&1
+    setup_acme_cronjob
 
         # 启用自动续订
         echo ""
