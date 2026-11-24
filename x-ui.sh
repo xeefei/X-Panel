@@ -825,25 +825,54 @@ setup_acme_cronjob() {
     local cron_comment="# 【证书续签：每天的凌晨 04:38 执行】"
     local cron_cmd='38 4 * * * "/root/.acme.sh"/acme.sh --cron --home "/root/.acme.sh" >/dev/null 2>&1'
     local existing_cron=""
+    local cron_installed_ok=0
 
-    if command -v crontab >/dev/null 2>&1; then
-        existing_cron=$(crontab -l 2>/dev/null || true)
+    # 1. 若系统缺少 crontab 命令，尝试按常见包管理器补装
+    if ! command -v crontab >/dev/null 2>&1; then
+        if command -v apt-get >/dev/null 2>&1; then
+            apt-get update -y >/dev/null 2>&1 && apt-get install -y cron >/dev/null 2>&1
+        elif command -v dnf >/dev/null 2>&1; then
+            dnf install -y cronie >/dev/null 2>&1
+        elif command -v yum >/dev/null 2>&1; then
+            yum install -y cronie >/dev/null 2>&1
+        elif command -v pacman >/dev/null 2>&1; then
+            pacman -Sy --noconfirm cron >/dev/null 2>&1
+        fi
     fi
 
-    # 清理旧的同款注释、旧的 04:38 任务，以及 acme.sh 自动生成的其他 --cron 定时任务，避免出现两条续签任务
-    local filtered_cron=$(printf "%s\n" "$existing_cron" \
-        | grep -vF "$cron_comment" \
-        | grep -vF "$cron_cmd" \
-        | grep -v '/.acme.sh/acme.sh --cron' \
-        | sed '/^[[:space:]]*$/d' || true)
+    # 2. 清理旧的同款注释、旧的 04:38 任务，以及 acme.sh 自动生成的其他 --cron 定时任务，避免出现两条续签任务
+    if command -v crontab >/dev/null 2>&1; then
+        existing_cron=$(crontab -l 2>/dev/null || true)
 
-    {
-        if [ -n "$filtered_cron" ]; then
-            printf "%s\n" "$filtered_cron"
+        local filtered_cron=$(printf "%s\n" "$existing_cron" \
+            | grep -vF "$cron_comment" \
+            | grep -vF "$cron_cmd" \
+            | grep -v '/.acme.sh/acme.sh --cron' \
+            | sed '/^[[:space:]]*$/d' || true)
+
+        {
+            if [ -n "$filtered_cron" ]; then
+                printf "%s\n" "$filtered_cron"
+            fi
+            printf "%s\n%s\n" "$cron_comment" "$cron_cmd"
+        } | crontab - >/dev/null 2>&1
+
+        # 3. 校验是否真正写入成功
+        if crontab -l 2>/dev/null | grep -qF "$cron_cmd"; then
+            cron_installed_ok=1
+            rm -f /etc/cron.d/xpanel-acme-renew >/dev/null 2>&1
+            LOGI "证书自动续签定时任务已写入 crontab（每天凌晨 04:38 执行）。"
         fi
-        printf "%s\n%s\n" "$cron_comment" "$cron_cmd"
-    } | crontab - >/dev/null 2>&1
+    fi
 
+    # 4. 如果 crontab 命令不可用或写入失败，使用 /etc/cron.d/ 作为系统级兜底
+    if [ "$cron_installed_ok" -eq 0 ] && [ -d /etc/cron.d ]; then
+        printf "%s\n38 4 * * * root \"/root/.acme.sh\"/acme.sh --cron --home \"/root/.acme.sh\" >/dev/null 2>&1\n" "$cron_comment" > /etc/cron.d/xpanel-acme-renew
+        chmod 644 /etc/cron.d/xpanel-acme-renew >/dev/null 2>&1
+        LOGI "已通过 /etc/cron.d/xpanel-acme-renew 写入系统级证书自动续签任务（每天凌晨 04:38 执行）。"
+    fi
+
+    # 5. 确保 cron / crond 守护进程已启用并启动
     if command -v systemctl >/dev/null 2>&1; then
         if systemctl list-unit-files 2>/dev/null | grep -q "^cron\.service"; then
             systemctl enable cron >/dev/null 2>&1
@@ -852,6 +881,8 @@ setup_acme_cronjob() {
             systemctl enable crond >/dev/null 2>&1
             systemctl start crond >/dev/null 2>&1
         fi
+    elif command -v service >/dev/null 2>&1; then
+        service cron start >/dev/null 2>&1 || service crond start >/dev/null 2>&1
     fi
 }
 
